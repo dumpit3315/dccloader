@@ -5,11 +5,11 @@
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
 
 // dcc code
-void main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
+void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
     DCCMemory mem = { 0 };
     uint32_t BUF_INIT[32];
     uint32_t dcc_init_size = 0;
-    uint32_t dcc_comp_packet_size;
+    uint32_t dcc_comp_packet_size = 0;
 
     CFI_Probe(BaseAddress1, &mem);
     switch (mem.type) {

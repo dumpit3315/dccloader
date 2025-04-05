@@ -193,7 +193,7 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (data)); // Then, the host writes the data to the WB bit, setting the W bit to high.
 	return 1;
 };
-uint32_t DN_Packet_DCC_Read() {
+uint32_t DN_Packet_DCC_Read(void) {
 	volatile uint32_t dcc_reg;
 
 	do {

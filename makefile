@@ -94,10 +94,10 @@ LDFLAGS = $(MCFLAGS) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,
 
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
 
-%o : %c
+%.o : %.c
 	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
-%o : %s
+%.o : %.s
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)

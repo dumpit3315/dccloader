@@ -49,7 +49,7 @@ _vectors:
    .global ResetHandler
    .global ExitFunction
    .global NorStartAddress
-   .extern main
+   .extern dcc_main
    .extern __stack_und_end
 
 /* Variables */
@@ -173,7 +173,7 @@ bss_clear_loop:
    adr   r3, NorStartAddress4
    ldr   r3, [r3]
    
-   b main
+   b dcc_main
 
 ExitFunction:
    nop

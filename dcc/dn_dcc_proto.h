@@ -81,7 +81,7 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len);
 uint32_t DN_Packet_DCC_Send(uint32_t data);
-uint32_t DN_Packet_DCC_Read();
+uint32_t DN_Packet_DCC_Read(void);
 void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
 uint32_t DN_Log2(uint32_t value);
