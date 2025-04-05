@@ -247,17 +247,17 @@ memmove:
 	add	r1, r1, r2
 .bw:
 	subs	r2, r2, #1
-	bmi	.ret
+	bmi	memmove_end
 	ldrb	r3, [r1, #-1]!
 	strb	r3, [r0, #-1]!
 	b	.bw
 .fw:
 	subs	r2, r2, #1
-	bmi	.ret
+	bmi	memmove_end
 	ldrb	r3, [r1], #1
 	strb	r3, [r0], #1
 	b	.fw
-.ret:
+memmove_end:
 	mov	r0, r12
 	bx lr
 
