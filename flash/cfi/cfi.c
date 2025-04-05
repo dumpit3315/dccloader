@@ -67,6 +67,9 @@ void CFI_Probe(uint32_t offset, DCCMemory *mem) {
         CFI_WRITE(offset, 0x00, 0x90);
     }
 
+    // 03 - Reset again and apply
+    CFI_WRITE(offset, 0, CFI_Type == 2 ? 0xf0 : 0xff);
+
     mem->manufacturer = (uint8_t)CFI_READ(offset, 0x00);
     mem->device_id = CFI_READ(offset, 0x01);
     mem->bit_width = qry.bit_width;
