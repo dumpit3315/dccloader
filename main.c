@@ -9,7 +9,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     DCCMemory mem = { 0 };
     uint32_t BUF_INIT[32];
     uint32_t dcc_init_size = 0;
-    uint32_t dcc_comp_packet_size = 0;
+    uint32_t dcc_comp_packet_size;
 
     CFI_Probe(BaseAddress1, &mem);
     switch (mem.type) {
@@ -69,6 +69,10 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                         case CMD_READ_COMP_LZO:
                             dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)read_offset, read_size, compBuf);
                             break;
+
+                        default:
+                            DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
+                            continue;
                     }
                     
                     DN_Packet_Send(compBuf, dcc_comp_packet_size);
@@ -91,10 +95,14 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                                 case CMD_READ_COMP_LZO:
                                     dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)read_offset, read_size, compBuf);
                                     break;
-                            }
-                    }
 
-                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                                default:
+                                    DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
+                                    continue;
+                            }
+
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                    }
                 } else {
                     DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
                 }
