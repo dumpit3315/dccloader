@@ -10,6 +10,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     uint32_t BUF_INIT[32];
     uint32_t dcc_init_size = 0;
     uint32_t dcc_comp_packet_size;
+    // uint32_t dcc_offset;
 
     CFI_Probe(BaseAddress1, &mem);
     switch (mem.type) {
@@ -108,6 +109,24 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 }
 
                 break;
+
+            case CMD_ERASE:
+                // uint32_t erase_offset = DN_Packet_DCC_Read();
+                // uint32_t erase_size = DN_Packet_DCC_Read();
+                // uint8_t flashIndex = (cmd >> 8) & 0xff;
+
+                // DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
+                // break;
+
+            case CMD_WRITE:
+                // uint32_t pAddrStart = DN_Packet_DCC_Read();
+                // uint32_t dataPackN = DN_Packet_DCC_Read();
+                // uint8_t progType = (cmd >> 8) & 0xff;
+                // uint8_t flashIndex = (cmd >> 16) & 0xff;
+
+                // DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
+                // break;
+
             default:
                 DN_Packet_Send_One(DCC_BAD_COMMAND(cmd));
         }

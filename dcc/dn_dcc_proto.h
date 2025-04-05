@@ -4,7 +4,8 @@
 typedef enum {
     MEMTYPE_NONE,
     MEMTYPE_NAND,
-    MEMTYPE_NOR
+    MEMTYPE_NOR,
+    MEMTYPE_ONENAND
 } MemTypes;
 
 typedef struct {

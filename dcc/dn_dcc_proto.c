@@ -133,7 +133,7 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
     }
   }
 
-  SIZE = ((outOffset + 3) & 0xfffffffc) - 4;
+  SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);
 
   return (outOffset + 3) & 0xfffffffc;
@@ -152,7 +152,7 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
   lzo1x_1_compress(src, size, dest + 8, &lzoSize, lzo_work_buffer);
   outOffset += lzoSize;
 
-  SIZE = ((outOffset + 3) & 0xfffffffc) - 4;
+  SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);
 
   return (outOffset + 3) & 0xfffffffc;
