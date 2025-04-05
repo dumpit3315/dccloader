@@ -25,6 +25,7 @@ typedef struct {
 #define CMD_READ_COMP_RLE 0x0 // RLE
 #define CMD_READ_COMP_NONE 0x40 // Uncompressed (non-standard)
 #define CMD_READ_COMP_LZO 0x80 // LZO (non-standard)
+#define CMD_READ_COMP_LZ4 0xc0 // LZ4 (non-standard)
 #define CMD_READ_RESP_FAIL(x) (0xff | (x << 8)) // Read error response code
 
 // Write Command: 46 00 01 00 00 00 8E 05 01 00 00 00 04 00 00 00 DD DD DD DD CC CC CC CC
@@ -33,6 +34,7 @@ typedef struct {
 #define CMD_WRITE_COMP_NONE 0x0 // Uncompressed
 #define CMD_WRITE_COMP_RLE 0x1 // RLE
 #define CMD_WRITE_COMP_LZO 0x2 // LZO (non-standard)
+#define CMD_WRITE_COMP_LZ4 0x3 // LZ4 (non-standard)
 
 // Erase Command: 45 01 00 00 00 00 8E 05 00 00 02 00
 // Returns: Status code followed with target id
@@ -79,6 +81,7 @@ typedef struct {
 // Functions
 uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest);
+uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len);
 uint32_t DN_Packet_DCC_Send(uint32_t data);

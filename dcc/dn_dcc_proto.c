@@ -1,5 +1,6 @@
 #include "dn_dcc_proto.h"
 #include "../minilzo/minilzo.h"
+#include "../lz4/lz4.h"
 
 /* 00 - Shared */
 #include <memory.h>
@@ -151,6 +152,25 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
   memcpy(dest, &MAGIC, 4);
   lzo1x_1_compress(src, size, dest + 8, &lzoSize, lzo_work_buffer);
   outOffset += lzoSize;
+
+  SIZE = outOffset - 4;
+  memcpy(dest + 4, &SIZE, 4);
+
+  return (outOffset + 3) & 0xfffffffc;
+}
+
+uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
+{
+  uint32_t MAGIC = CMD_WRITE_COMP_LZ4;
+  uint32_t SIZE;
+  uint32_t outOffset = 8;
+  uint32_t lz4_size;
+  uint32_t lz4_comp_size;
+
+  memcpy(dest, &MAGIC, 4);
+  lz4_comp_size = LZ4_compressBound(size);
+  lz4_size = LZ4_compress_default((const char *)src, (char *)(dest + 8), size, lz4_comp_size);
+  outOffset += lz4_size;
 
   SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);

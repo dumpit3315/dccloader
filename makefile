@@ -51,7 +51,7 @@ UADEFS =
 
 # List C source files here
 # SRC  = main.c dcc/dn_dcc_proto.c minilzo/minilzo.c lwmem/lwmem.c flash/cfi/cfi.c
-SRC  = main.c dcc/dn_dcc_proto.c minilzo/minilzo.c flash/cfi/cfi.c
+SRC  = main.c dcc/dn_dcc_proto.c minilzo/minilzo.c lz4/lz4_fs.c flash/cfi/cfi.c
 
 # List ASM source files here
 ASRC = crt.s

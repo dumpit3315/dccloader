@@ -58,6 +58,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 }
 
                 if (flashIndex == 0) {
+                Jump_Read_NOR:
                     switch (algo) {
                         case CMD_READ_COMP_NONE:
                             dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)read_offset, read_size, compBuf);
@@ -69,6 +70,10 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
 
                         case CMD_READ_COMP_LZO:
                             dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)read_offset, read_size, compBuf);
+                            break;
+
+                        case CMD_READ_COMP_LZ4:
+                            dcc_comp_packet_size = DN_Packet_Compress3((uint8_t *)read_offset, read_size, compBuf);
                             break;
 
                         default:
@@ -84,25 +89,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
 
                         case MEMTYPE_NOR:
                         default:
-                            switch (algo) {
-                                case CMD_READ_COMP_NONE:
-                                    dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)read_offset, read_size, compBuf);
-                                    break;
-        
-                                case CMD_READ_COMP_RLE:
-                                    dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)read_offset, read_size, compBuf);
-                                    break;
-        
-                                case CMD_READ_COMP_LZO:
-                                    dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)read_offset, read_size, compBuf);
-                                    break;
-
-                                default:
-                                    DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
-                                    continue;
-                            }
-
-                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                            goto Jump_Read_NOR;
                     }
                 } else {
                     DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));

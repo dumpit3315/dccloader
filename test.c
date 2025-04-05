@@ -64,4 +64,11 @@ int main(void) {
         printf("%02X", pkt[i]);
     }
     printf("\n");
+
+    test_comp = DN_Packet_Compress3(testComp, 0x200, pkt);
+    printf("COMP 3: ");
+    for (int i = 0; i < test_comp; i++) {
+        printf("%02X", pkt[i]);
+    }
+    printf("\n");
 }
