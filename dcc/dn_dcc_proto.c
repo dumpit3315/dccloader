@@ -72,8 +72,10 @@ const uint32_t crctab[] = {
 
 uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len)
 {
-	for (uint32_t i = 0; i < len; ++i)
+	for (uint32_t i = 0; i < len; ++i) {
+    wdog_reset();
 	  COMPUTE(crc, data[i]);
+  }
 
 	return crc;
 }
@@ -86,6 +88,7 @@ uint32_t DN_RLE_Matching(uint8_t *src, uint32_t size) {
   if (size < 2) return count;
 
   while ((offset < (size - 1)) && (count < 0x7fff) && (src[offset] == src[offset + 1])) {
+    wdog_reset();
     count++;
     offset++;
   }
@@ -105,6 +108,7 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
 
   memcpy(dest, &MAGIC, 4);
   while (inOffset < size) {
+    wdog_reset();
     RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset); 
     
     if (RLE_Count == 1) {
@@ -112,11 +116,13 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
       rawInOffset = inOffset;
 
       while (RLE_Count == 1 && inOffset < size) {
+        wdog_reset();
         RAW_Count++;
         inOffset++;
         RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset);
       }
 
+      wdog_reset();
       memcpy(dest + outOffset, &RAW_Count, 2);
       memcpy(dest + outOffset + 2, src + rawInOffset, RAW_Count);
       outOffset += 2 + RAW_Count;
@@ -150,7 +156,11 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
   lzo_uint lzoSize;
 
   memcpy(dest, &MAGIC, 4);
+
+  wdog_reset();
   lzo1x_1_compress(src, size, dest + 8, &lzoSize, lzo_work_buffer);
+
+  wdog_reset();
   outOffset += lzoSize;
 
   SIZE = outOffset - 4;
@@ -168,8 +178,12 @@ uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
   uint32_t lz4_comp_size;
 
   memcpy(dest, &MAGIC, 4);
+
+  wdog_reset();
   lz4_comp_size = LZ4_compressBound(size);
   lz4_size = LZ4_compress_default((const char *)src, (char *)(dest + 8), size, lz4_comp_size);
+
+  wdog_reset();
   outOffset += lz4_size;
 
   SIZE = outOffset - 4;
@@ -207,6 +221,7 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	volatile uint32_t dcc_reg;
 
 	do {
+    wdog_reset();
 		asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (dcc_reg) :);
 		/* operation controlled by master, cancel operation
 			 upon reception of data for immediate response */
@@ -220,6 +235,7 @@ uint32_t DN_Packet_DCC_Read(void) {
 	volatile uint32_t dcc_reg;
 
 	do {
+    wdog_reset();
 		asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (dcc_reg) :);
 	} while ((dcc_reg&1) == 0); // When debugger sends the data to the DCC, the R bit was set to high.
 
@@ -231,6 +247,7 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	volatile uint32_t dcc_reg;
 
 	do {
+    wdog_reset();
 		asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (dcc_reg) :);
 		/* operation controlled by master, cancel operation
 			 upon reception of data for immediate response */
@@ -244,6 +261,7 @@ uint32_t DN_Packet_DCC_Read(void) {
 	volatile uint32_t dcc_reg;
 
 	do {
+    wdog_reset();
 		asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (dcc_reg) :);
 	} while ((dcc_reg&1) == 0); // When debugger sends the data to the DCC, the R bit was set to high.
 
@@ -254,11 +272,12 @@ uint32_t DN_Packet_DCC_Read(void) {
 #endif
 
 void DN_Packet_Send(uint8_t *src, uint32_t size) {
-  uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
   if (size & 3) return; // Must be dword aligned
+  uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
 
   DN_Packet_DCC_Send(size >> 2);
   for (uint32_t src_offset = 0; src_offset < size; src_offset += 4) {
+    wdog_reset();
     DN_Packet_DCC_Send(*(uint32_t *)(&src[src_offset]));
   }
 
@@ -270,7 +289,7 @@ void DN_Packet_Send_One(uint32_t data) {
 
   DN_Packet_DCC_Send(1);
   DN_Packet_DCC_Send(data);
-
+  
   DN_Packet_DCC_Send(checksum);
 }
 

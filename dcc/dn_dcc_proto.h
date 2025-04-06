@@ -40,6 +40,9 @@ typedef struct {
 // Returns: Status code followed with target id
 #define CMD_ERASE 0x45 // Erase, READ_MEMORY command structure
 
+#define CMD_SETBUF 0x43
+#define CMD_MEM 0x4d
+
 // Status code for Write/Erase
 #define CMD_WRITE_ERASE_STATUS(code, target) (code | (target << 8))
 
@@ -89,3 +92,6 @@ uint32_t DN_Packet_DCC_Read(void);
 void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
 uint32_t DN_Log2(uint32_t value);
+
+// Watchdog
+extern void wdog_reset(void);
