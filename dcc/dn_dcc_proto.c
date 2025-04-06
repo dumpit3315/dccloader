@@ -224,7 +224,9 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 		asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (dcc_reg) :);
 		/* operation controlled by master, cancel operation
 			 upon reception of data for immediate response */
+#ifdef CANCEL_WRITE_ON_DCC_READ_BIT
 		if (dcc_reg&0x40000000) return 0; // Cancel if the debugger sends any data to the DCC buffer.
+#endif
 	} while (dcc_reg&0x20000000); // Wait until the debugger reads the WB data, which sets the W bit to low.
 
 	asm volatile ("mcr p14, 0, %0, C0, C5" : : "r" (data)); // Then, the host writes the data to the WB bit, setting the W bit to high.
@@ -250,7 +252,9 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 		asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (dcc_reg) :);
 		/* operation controlled by master, cancel operation
 			 upon reception of data for immediate response */
+#ifdef CANCEL_WRITE_ON_DCC_READ_BIT
 		if (dcc_reg&1) return 0; // Cancel if the debugger sends any data to the DCC buffer.
+#endif
 	} while (dcc_reg&2); // Wait until the debugger reads the WB data, which sets the W bit to low.
 
 	asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (data)); // Then, the host writes the data to the WB bit, setting the W bit to high.
