@@ -155,7 +155,14 @@ bss_clear_loop:
    mov   r2, #0 /* No arguments */
    mov   r3, #0 /* No arguments */
 
-   mrc   p14, 0, r0, cr1, cr0, 0 /* TOOD: Why is this line necessary */
+   /* TOOD: Why is this line necessary */
+#if \
+  ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
+  || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
+   mrc   p14, 0, r0, cr0, cr5, 0
+#else
+   mrc   p14, 0, r0, cr1, cr0, 0
+#endif
 
    mov   r0, #0
    adr   r0, NorStartAddress1
