@@ -44,6 +44,7 @@
 #endif
 #include <limits.h>
 #include <stddef.h>
+#include "../dcc/dn_dcc_proto.h"
 #if defined(MINILZO_CFG_USE_INTERNAL_LZODEFS)
 
 #ifndef __LZODEFS_H_INCLUDED
@@ -4941,6 +4942,7 @@ do_compress ( const lzo_bytep in , lzo_uint  in_len,
     for (;;)
     {
         const lzo_bytep m_pos;
+        wdog_reset();
 #if !(LZO_DETERMINISTIC)
         LZO_DEFINE_UNINITIALIZED_VAR(lzo_uint, m_off, 0);
         lzo_uint m_len;
@@ -5452,6 +5454,7 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
 
     for (;;)
     {
+        wdog_reset();
         NEED_IP(3);
         t = *ip++;
         if (t >= 16)
@@ -5548,6 +5551,7 @@ first_literal_run:
 
         for (;;) {
 match:
+            wdog_reset();
             if (t >= 64)
             {
 #if defined(COPY_DICT)
@@ -5993,6 +5997,7 @@ DO_DECOMPRESS  ( const lzo_bytep in , lzo_uint  in_len,
 
     for (;;)
     {
+        wdog_reset();
         NEED_IP(3);
         t = *ip++;
         if (t >= 16)
@@ -6089,6 +6094,7 @@ first_literal_run:
 
         for (;;) {
 match:
+            wdog_reset();
             if (t >= 64)
             {
 #if defined(COPY_DICT)

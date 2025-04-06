@@ -122,7 +122,6 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
         RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset);
       }
 
-      wdog_reset();
       memcpy(dest + outOffset, &RAW_Count, 2);
       memcpy(dest + outOffset + 2, src + rawInOffset, RAW_Count);
       outOffset += 2 + RAW_Count;

@@ -43,6 +43,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     DN_Packet_Send((uint8_t *)BUF_INIT, 4 * dcc_init_size);
 
     while (1) {
+        wdog_reset();
         uint32_t cmd = DN_Packet_DCC_Read();
 
         switch (cmd & 0xff) {

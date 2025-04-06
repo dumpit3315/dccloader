@@ -114,6 +114,7 @@
 #  define LZ4_STATIC_LINKING_ONLY
 #endif
 #include "lz4.h"
+#include "../dcc/dn_dcc_proto.h"
 /* see also "memory routines" below */
 
 
@@ -1015,6 +1016,8 @@ LZ4_FORCE_INLINE int LZ4_compress_generic_validated(
         const BYTE* match;
         BYTE* token;
         const BYTE* filledIp;
+
+        wdog_reset();
 
         /* Find a match */
         if (tableType == byPtr) {
@@ -2081,6 +2084,7 @@ LZ4_decompress_generic(
         /* Fast loop : decode sequences as long as output < oend-FASTLOOP_SAFE_DISTANCE */
         DEBUGLOG(6, "using fast decode loop");
         while (1) {
+            wdog_reset();
             /* Main fastloop assertion: We can always wildcopy FASTLOOP_SAFE_DISTANCE */
             assert(oend - op >= FASTLOOP_SAFE_DISTANCE);
             assert(ip < iend);
@@ -2213,6 +2217,7 @@ LZ4_decompress_generic(
         /* Main Loop : decode remaining sequences where output < FASTLOOP_SAFE_DISTANCE */
         DEBUGLOG(6, "using safe decode loop");
         while (1) {
+            wdog_reset();
             assert(ip < iend);
             token = *ip++;
             length = token >> ML_BITS;  /* literal length */
