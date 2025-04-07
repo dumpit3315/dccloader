@@ -79,14 +79,14 @@ typedef struct {
 #define DCC_PROBE_ERROR    0x26 // Device probe failed
 #define DCC_ASSERT_ERROR   0x27 // Ready flag timeout
 #define DCC_READ_ERROR     0x28 // Read error
-#define DCC_W_ASSERT_ERROR 0x2A // Ready flag timeout during white
-#define DCC_E_ASSERT_ERROR 0x2B // Ready flag timeout during white
+#define DCC_W_ASSERT_ERROR 0x2A // Ready flag timeout during write
+#define DCC_E_ASSERT_ERROR 0x2B // Ready flag timeout during erase
 #define DCC_ROFS_ERROR     0x2D // Cannot write to read-only memory
 #define DCC_E_UNK_ERROR    0x2E // Unknown erase error, Please file a bug report
 #define DCC_WUPROT_TIMEOUT 0x2F // Write unprotect timeout
 #define DCC_WUPROT_ERROR   0x30 // Write unprotect failed
 #define DCC_W_UNK_ERROR    0x31 // Unknown write error, Please file a bug report
-#define DCC_FLASH_NOENT    0x37 // Flash chip with this ID could not be found
+#define DCC_FLASH_NOENT    0x37 // Flash with this ID is not probed/not found
 #define DCC_WPROT_ERROR    0x3C // Read-only memory or Write/Erase routines not implemented
 #define DCC_NOMEM_ERROR    0x3D // Not enough memory
 
