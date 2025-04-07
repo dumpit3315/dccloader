@@ -42,6 +42,10 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
 
     DN_Packet_Send((uint8_t *)BUF_INIT, 4 * dcc_init_size);
 
+    uint32_t flashIndex;
+    uint32_t srcOffset;
+    uint32_t srcSize;
+
     while (1) {
         wdog_reset();
         uint32_t cmd = DN_Packet_DCC_Read();
@@ -59,7 +63,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 break;
                 
             case CMD_GETMEMSIZE:
-                uint8_t flashIndex = (cmd >> 8) & 0xff;
+                flashIndex = (cmd >> 8) & 0xff;
                 if (flashIndex == 0) {
                     DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, 0));
                 } else if (flashIndex == 1) {
@@ -70,12 +74,12 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 break;
 
             case CMD_READ:
-                uint32_t read_offset = DN_Packet_DCC_Read();
-                uint32_t read_size = DN_Packet_DCC_Read();
-                uint8_t flashIndex = (cmd >> 8) & 0xff;
+                srcOffset = DN_Packet_DCC_Read();
+                srcSize = DN_Packet_DCC_Read();
+                flashIndex = (cmd >> 8) & 0xff;
                 uint8_t algo = (cmd >> 24) & 0xff;
 
-                if (read_size > DCC_BUFFER_SIZE) {
+                if (srcSize > DCC_BUFFER_SIZE) {
                     DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
                     continue;
                 }
@@ -84,19 +88,19 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 Jump_Read_NOR:
                     switch (algo) {
                         case CMD_READ_COMP_NONE:
-                            dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)read_offset, read_size, compBuf);
+                            dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
 
                         case CMD_READ_COMP_RLE:
-                            dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)read_offset, read_size, compBuf);
+                            dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
 
                         case CMD_READ_COMP_LZO:
-                            dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)read_offset, read_size, compBuf);
+                            dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
 
                         case CMD_READ_COMP_LZ4:
-                            dcc_comp_packet_size = DN_Packet_Compress3((uint8_t *)read_offset, read_size, compBuf);
+                            dcc_comp_packet_size = DN_Packet_Compress3((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
 
                         default:
@@ -121,9 +125,9 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 break;
 
             case CMD_ERASE:
-                uint32_t erase_offset = DN_Packet_DCC_Read();
-                uint32_t erase_size = DN_Packet_DCC_Read();
-                uint8_t flashIndex = (cmd >> 8) & 0xff;
+                srcOffset = DN_Packet_DCC_Read();
+                srcSize = DN_Packet_DCC_Read();
+                flashIndex = (cmd >> 8) & 0xff;
 
                 DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
                 break;
