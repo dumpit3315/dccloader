@@ -40,8 +40,17 @@ typedef struct {
 // Returns: Status code followed with target id
 #define CMD_ERASE 0x45 // Erase, READ_MEMORY command structure
 
+// Write to Buffer: 43 00 08 00
+// Returns: 0x638 status code
 #define CMD_SETBUF 0x43
-#define CMD_MEM 0x4d
+
+// Get Info command: 49 00 00 00
+// Returns: Initialization data
+#define CMD_GETINFO 0x49
+
+// Get Memory Size command: 4d 00 00 00
+// Returns: Status code followed with memory size in MB
+#define CMD_GETMEMSIZE 0x4d
 
 // Status code for Write/Erase
 #define CMD_WRITE_ERASE_STATUS(code, target) (code | (target << 8))
@@ -77,7 +86,7 @@ typedef struct {
 #define DCC_WUPROT_TIMEOUT 0x2F // Write unprotect timeout
 #define DCC_WUPROT_ERROR   0x30 // Write unprotect failed
 #define DCC_W_UNK_ERROR    0x31 // Unknown write error, Please file a bug report
-#define DCC_UNK_ERROR      0x37 // Unknown error, Please file a bug report
+#define DCC_FLASH_NOENT    0x37 // Flash chip with this ID could not be found
 #define DCC_WPROT_ERROR    0x3C // Read-only memory or Write/Erase routines not implemented
 #define DCC_NOMEM_ERROR    0x3D // Not enough memory
 

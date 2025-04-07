@@ -47,6 +47,28 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
         uint32_t cmd = DN_Packet_DCC_Read();
 
         switch (cmd & 0xff) {
+            case CMD_SETBUF:
+                for (int c = 0; c < (cmd >> 0x10); c += 4) {
+                    DN_Packet_DCC_Read();
+                }
+                DN_Packet_Send_One(0x38 | (0x6 << 8));
+                break;
+
+            case CMD_GETINFO:
+                DN_Packet_Send((uint8_t *)BUF_INIT, 4 * dcc_init_size);
+                break;
+                
+            case CMD_GETMEMSIZE:
+                uint8_t flashIndex = (cmd >> 8) & 0xff;
+                if (flashIndex == 0) {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, 0));
+                } else if (flashIndex == 1) {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, mem.size >> 20));
+                } else {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_FLASH_NOENT, flashIndex));
+                }
+                break;
+
             case CMD_READ:
                 uint32_t read_offset = DN_Packet_DCC_Read();
                 uint32_t read_size = DN_Packet_DCC_Read();
@@ -93,18 +115,18 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                             goto Jump_Read_NOR;
                     }
                 } else {
-                    DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
+                    DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_FLASH_NOENT));
                 }
 
                 break;
 
             case CMD_ERASE:
-                // uint32_t erase_offset = DN_Packet_DCC_Read();
-                // uint32_t erase_size = DN_Packet_DCC_Read();
-                // uint8_t flashIndex = (cmd >> 8) & 0xff;
+                uint32_t erase_offset = DN_Packet_DCC_Read();
+                uint32_t erase_size = DN_Packet_DCC_Read();
+                uint8_t flashIndex = (cmd >> 8) & 0xff;
 
-                // DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
-                // break;
+                DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
+                break;
 
             case CMD_WRITE:
                 // uint32_t pAddrStart = DN_Packet_DCC_Read();
