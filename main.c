@@ -51,7 +51,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
         uint32_t cmd = DN_Packet_DCC_Read();
 
         switch (cmd & 0xff) {
-            case CMD_SETBUF:
+            case CMD_CONFIGURE:
                 for (int c = 0; c < (cmd >> 0x10); c += 4) {
                     DN_Packet_DCC_Read();
                 }

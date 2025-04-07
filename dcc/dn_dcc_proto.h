@@ -40,9 +40,9 @@ typedef struct {
 // Returns: Status code followed with target id
 #define CMD_ERASE 0x45 // Erase, READ_MEMORY command structure
 
-// Write to Buffer: 43 00 08 00
+// Configure: 43 00 08 00
 // Returns: 0x638 status code
-#define CMD_SETBUF 0x43
+#define CMD_CONFIGURE 0x43
 
 // Get Info command: 49 00 00 00
 // Returns: Initialization data
