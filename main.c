@@ -51,7 +51,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 for (int c = 0; c < (cmd >> 0x10); c += 4) {
                     DN_Packet_DCC_Read();
                 }
-                DN_Packet_Send_One(0x38 | (0x6 << 8));
+                DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x38, 0x6));
                 break;
 
             case CMD_GETINFO:
