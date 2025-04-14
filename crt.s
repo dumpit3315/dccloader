@@ -1,5 +1,4 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
-
 /****************************************************************************
 *  Copyright (c) 2006 by Michael Fischer. All rights reserved.
 ****************************************************************************
@@ -57,7 +56,7 @@ NorStartAddress1:  .word 0x12345678
 NorStartAddress2:  .word 0x12345678
 NorStartAddress3:  .word 0x12345678
 NorStartAddress4:  .word 0x12345678
-#ifdef USE_LWMEM
+#if HAVE_LWMEM
 lwmem_init:
    .word 0x00020000
    .word 0x00060000
@@ -124,7 +123,7 @@ bss_clear_loop:
    msr   cpsr, r0
 #endif
    
-#ifdef USE_LWMEM
+#if HAVE_LWMEM
    /*
     * Setup lwmem memory manager
     */

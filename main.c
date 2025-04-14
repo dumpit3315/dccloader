@@ -1,47 +1,56 @@
 #include "dcc/dn_dcc_proto.h"
 #include "flash/cfi/cfi.h"
+#include "devices.h"
 
 #define DCC_BUFFER_SIZE 0x20000
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
 
 // dcc code
 void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
-    DCCMemory mem = { 0 };
-    uint32_t BUF_INIT[32];
-    uint32_t dcc_init_size = 0;
-    uint32_t dcc_comp_packet_size;
-    // uint32_t dcc_offset;
+    DCCMemory mem[16] = { 0 };
+    uint32_t BUF_INIT[512];
+    uint32_t dcc_init_offset = 0;
 
-    CFI_Probe(BaseAddress1, &mem);
-    switch (mem.type) {
-        case MEMTYPE_NOR:
-            BUF_INIT[0] = DCC_MEM_OK | (DCC_MEM_NOR << 16);
-            BUF_INIT[1] = mem.manufacturer | (mem.device_id << 16);
-            BUF_INIT[2] = DCC_MEM_NOR_INFO(mem.bit_width, mem.size >> 20);
-            BUF_INIT[3] = DCC_MEM_OK | (0x5 << 16);
-            BUF_INIT[4] = DCC_BUFFER_SIZE;
-            dcc_init_size = 5;
-            break;
+    for (int i = 0; i < 16; i++) {
+        if (!devices[i].driver) break;
 
-        case MEMTYPE_NAND:
-            BUF_INIT[0] = DCC_MEM_OK | (mem.page_size << 16);
-            BUF_INIT[1] = mem.manufacturer | (mem.device_id << 16);
-            BUF_INIT[2] = DCC_MEM_OK | (0x5 << 16);
-            BUF_INIT[3] = DCC_BUFFER_SIZE;
-            dcc_init_size = 4;
-            break;
+        DCC_RETURN res = devices[i].driver->initialize(&mem[i], devices[i].base_offset);
+        if (res != DCC_OK) mem[i].type = MEMTYPE_NONE;
 
-        default:
-            BUF_INIT[0] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
-            BUF_INIT[1] = mem.manufacturer | (mem.device_id << 16);
-            BUF_INIT[2] = DCC_MEM_OK | (0x5 << 16);
-            BUF_INIT[3] = DCC_BUFFER_SIZE;
-            dcc_init_size = 4;
+        switch (mem[i].type) {
+            case MEMTYPE_NOR:
+            case MEMTYPE_SUPERAND:
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NOR(mem[i].page_size) << 16);
+                BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_NOR_INFO(mem[i].block_size, mem[i].size >> 20, mem[i].page_size);
+                break;
 
+            case MEMTYPE_NAND:
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (mem[i].page_size << 16);
+                BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
+                break;
+
+            case MEMTYPE_ONENAND:
+            case MEMTYPE_AND:
+            case MEMTYPE_AG_AND:
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NAND_EX(mem[i].page_size) << 16);
+                BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_NAND_EX_INFO(mem[i].block_size, mem[i].size >> 20, mem[i].page_size);
+                break;
+
+            default:
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
+                BUF_INIT[dcc_init_offset++] = 0;
+
+        }
     }
 
-    DN_Packet_Send((uint8_t *)BUF_INIT, 4 * dcc_init_size);
+    BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_BUFFER(0) << 16);
+    BUF_INIT[dcc_init_offset++] = DCC_BUFFER_SIZE;
+    
+    DN_Packet_Send((uint8_t *)BUF_INIT, dcc_init_offset << 2);
 
+    uint32_t dcc_comp_packet_size;
     uint32_t flashIndex;
     uint32_t srcOffset;
     uint32_t srcSize;
@@ -59,15 +68,15 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 break;
 
             case CMD_GETINFO:
-                DN_Packet_Send((uint8_t *)BUF_INIT, 4 * dcc_init_size);
+                DN_Packet_Send((uint8_t *)BUF_INIT, dcc_init_offset << 2);
                 break;
                 
             case CMD_GETMEMSIZE:
                 flashIndex = (cmd >> 8) & 0xff;
                 if (flashIndex == 0) {
                     DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, 0));
-                } else if (flashIndex == 1) {
-                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, mem.size >> 20));
+                } else if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x21, mem[flashIndex - 1].size >> 20));
                 } else {
                     DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_FLASH_NOENT, flashIndex));
                 }
@@ -95,13 +104,17 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                             dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
 
+                        #if HAVE_MINILZO
                         case CMD_READ_COMP_LZO:
                             dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
+                        #endif
 
+                        #if HAVE_LZ4
                         case CMD_READ_COMP_LZ4:
                             dcc_comp_packet_size = DN_Packet_Compress3((uint8_t *)srcOffset, srcSize, compBuf);
                             break;
+                        #endif
 
                         default:
                             DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
@@ -109,13 +122,14 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                     }
                     
                     DN_Packet_Send(compBuf, dcc_comp_packet_size);
-                } else if (flashIndex == 1) {
-                    switch (mem.type) {
+                } else if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
+                    switch (mem[flashIndex - 1].type) {
                         case MEMTYPE_NAND:
                             break; // Implement NAND page routines
 
                         case MEMTYPE_NOR:
                         default:
+                            srcOffset += mem[flashIndex - 1].base_offset;
                             goto Jump_Read_NOR;
                     }
                 } else {

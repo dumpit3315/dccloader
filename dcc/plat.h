@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
 
 #define WRITE_U8(_reg, _val)  (*((volatile uint8_t *)(_reg)) = (_val))
 #define WRITE_U16(_reg, _val)  (*((volatile uint16_t *)(_reg)) = (_val))

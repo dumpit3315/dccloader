@@ -1,11 +1,16 @@
 #pragma once
 #include "plat.h"
 
+typedef uint32_t DCC_RETURN;
+
 typedef enum {
     MEMTYPE_NONE,
     MEMTYPE_NAND,
     MEMTYPE_NOR,
-    MEMTYPE_ONENAND
+    MEMTYPE_ONENAND,
+    MEMTYPE_SUPERAND,
+    MEMTYPE_AND,
+    MEMTYPE_AG_AND,
 } MemTypes;
 
 typedef struct {
@@ -13,10 +18,22 @@ typedef struct {
     uint16_t device_id;
     uint8_t bit_width;
     uint32_t page_size;
+    uint32_t block_size;
     uint32_t size;
     uint32_t nor_cmd_set;
+    uint32_t base_offset;
     MemTypes type;
 } DCCMemory;
+
+typedef struct {
+    DCC_RETURN (*initialize)(DCCMemory *mem, uint32_t offset);
+    DCC_RETURN (*read)(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
+} Driver;
+
+typedef struct {
+    Driver *driver;
+    uint32_t base_offset;
+} Device;
 
 // RIFF DCC Commands
 // Read Command: 52 01 00 00 00 00 8E 05 00 00 02 00
@@ -58,7 +75,7 @@ typedef struct {
 // RIFF DCC Probe Responses
 #define DCC_MEM_OK 0x4B4F // OK result, followed with flash ID and type
 // Memory types
-#define DCC_MEM_NONE   0xffff // Code when one of the flash chip cannot be initialized
+#define DCC_MEM_NONE   0xffff // Probe failure, followed with error code in Word 1
 // NAND
 #define DCC_MEM_NAND_U 0x0 // Uninitialized
 #define DCC_MEM_NAND_S 0x200 // Small page NAND (B: 0x4000)
@@ -66,8 +83,13 @@ typedef struct {
 #define DCC_MEM_NAND_X 0x1000 // Extra-large page NAND (B: 0x40000)
 // for NOR, RIFF computes size by summing all erase block regions.
 // (y + 1) * (z << 8), y representing the first uint16 value, and z representing the second uint16 value
-#define DCC_MEM_NOR    0x090B // NOR memory (Word 2 specifies the information)
-#define DCC_MEM_NOR_INFO(bus_width, size_mb) ((bus_width << 16) | (DN_Log2(size_mb) << 24) | DCC_MEM_NOR) // NOR memory info in Word 2
+#define DCC_MEM_NOR(page_size) (0x3 | (1 << 3) | (DN_Log2(page_size) << 8)) // NOR memory (Word 2 specifies the information)
+#define DCC_MEM_NOR_INFO(block_size, size_mb, page_size) ((DN_Log2(block_size) << 16) | (DN_Log2(size_mb) << 24) | DCC_MEM_NOR(page_size)) // NOR memory info in Word 2
+// NAND memory with info (used for OneNAND, and other NAND-like devices)
+#define DCC_MEM_NAND_EX(page_size) (0x3 | (DN_Log2(page_size) << 8)) // NAND memory, extended (Word 2 specifies the information)
+#define DCC_MEM_NAND_EX_INFO(block_size, size_mb, page_size) ((DN_Log2(block_size) << 16) | (DN_Log2(size_mb) << 24) | DCC_MEM_NAND_EX(page_size)) // NAND memory info in Word 2
+// used to set buffer size
+#define DCC_MEM_BUFFER(separate) (0x5 | (separate << 8))
 
 // Response codes (For troubleshooting, refer to USB capture between RIFF and Loader)
 #define DCC_BAD_COMMAND(c) ((c << 8) | 0x20) // Unknown command, command code follows after an error code
@@ -92,8 +114,12 @@ typedef struct {
 
 // Functions
 uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest);
+#if HAVE_MINILZO
 uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest);
+#endif
+#if HAVE_LZ4
 uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest);
+#endif
 uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest);
 uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len);
 uint32_t DN_Packet_DCC_Send(uint32_t data);

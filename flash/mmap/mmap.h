@@ -5,4 +5,4 @@
 #define MEMDUMP_DEVID 0xd4
 #define MEMDUMP_MAX_SIZE 0x02000000
 
-void Memdump_Probe(uint32_t offset, DCCMemory *mem);
+extern Driver memdump;

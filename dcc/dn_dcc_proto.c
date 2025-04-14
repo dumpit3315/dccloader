@@ -1,6 +1,10 @@
 #include "dn_dcc_proto.h"
+#if HAVE_MINILZO
 #include "../minilzo/minilzo.h"
+#endif
+#if HAVE_LZ4
 #include "../lz4/lz4.h"
+#endif
 
 /* 00 - Shared */
 #include <memory.h>
@@ -119,6 +123,8 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
         wdog_reset();
         RAW_Count++;
         inOffset++;
+
+        if (RAW_Count >= 0x7fff) break;
         RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset);
       }
 
@@ -145,6 +151,7 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
   return (outOffset + 3) & 0xfffffffc;
 }
 
+#if HAVE_MINILZO
 static uint8_t lzo_work_buffer[LZO1X_1_MEM_COMPRESS];
 
 uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
@@ -167,7 +174,9 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
 
   return (outOffset + 3) & 0xfffffffc;
 }
+#endif
 
+#if HAVE_LZ4
 uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
 {
   uint32_t MAGIC = CMD_WRITE_COMP_LZ4;
@@ -190,6 +199,7 @@ uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
 
   return (outOffset + 3) & 0xfffffffc;
 }
+#endif
 
 uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest)
 {
@@ -279,9 +289,9 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
 
   DN_Packet_DCC_Send(size >> 2);
-  for (uint32_t src_offset = 0; src_offset < size; src_offset += 4) {
+  for (uint32_t src_offset = 0; src_offset < (size >> 2); src_offset++) {
     wdog_reset();
-    DN_Packet_DCC_Send(*(uint32_t *)(&src[src_offset]));
+    DN_Packet_DCC_Send(((uint32_t *)(src))[src_offset]);
   }
 
   DN_Packet_DCC_Send(checksum);

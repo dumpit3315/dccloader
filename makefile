@@ -1,5 +1,3 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
-
 ##############################################################################################
 # Start of default section
 #
@@ -51,7 +49,55 @@ UADEFS =
 
 # List C source files here
 # SRC  = main.c dcc/dn_dcc_proto.c minilzo/minilzo.c lwmem/lwmem.c flash/cfi/cfi.c
-SRC  = main.c dcc/memory.c dcc/dn_dcc_proto.c plat/wdog.c flash/cfi/cfi.c minilzo/minilzo.c lz4/lz4_fs.c
+DEVICES = flash/mmap/mmap.c
+CONTROLLERS = 
+ADD_DEPS = 
+
+# Additional deps
+ifeq ($(LZO), 1)
+ADD_DEPS += minilzo/minilzo.c
+DDEFS += -DHAVE_MINILZO=1
+else
+DDEFS += -DHAVE_MINILZO=0
+endif
+
+ifeq ($(LZ4), 1)
+ADD_DEPS += lz4/lz4_fs.c
+DDEFS += -DHAVE_LZ4=1
+else
+DDEFS += -DHAVE_LZ4=0
+endif
+
+ifeq ($(LWMEM), 1)
+ADD_DEPS += lwmem/lwmem.c
+DDEFS += -DHAVE_LWMEM=1
+DADEFS += -DHAVE_LWMEM=1
+else
+DDEFS += -DHAVE_LWMEM=0
+DADEFS += -DHAVE_LWMEM=0
+endif
+
+# Devices
+ifeq ($(CFI), 1)
+DEVICES += flash/cfi/cfi.c
+endif
+
+ifdef NAND_CONTROLLER
+DEVICES += flash/nand/nand.c
+CONTROLLERS += flash/nand/controller/$(NAND_CONTROLLER).c
+endif
+
+ifdef ONENAND_CONTROLLER
+DEVICES += flash/onenand/onenand.c
+CONTROLLERS += flash/onenand/controller/$(ONENAND_CONTROLLER).c
+endif
+
+ifdef SUPERAND_CONTROLLER
+DEVICES += flash/superand/superand.c
+CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
+endif
+
+SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c plat/wdog.c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
 ASRC = crt.s
@@ -124,6 +170,16 @@ clean:
 	-rm -f $(ASRC:.s=.s.bak)
 	-rm -f $(ASRC:.s=.lst)
 	-rm -fR .dep
+
+help:
+	@echo Dumpnow DCC Loader
+	@echo 	LZO=1 = Enable LZO Compression
+	@echo 	LZ4=1 = Enable LZ4 Compression
+	@echo 	LWMEM=1 = Enable LWMEM memory management
+	@echo 	CFI=1 = Enable CFI interface
+	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
+	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
+	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
 
 #
 # Include the dependency files, should be the last of the makefile
