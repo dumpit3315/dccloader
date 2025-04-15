@@ -1,3 +1,10 @@
 {
-    "makefile.configureOnOpen": true
+    "makefile.configureOnOpen": true,
+    "files.associations": {
+        "*.ejs": "html",
+        "*.c": "c",
+        "*.s": "arm",
+        "*.h": "c",
+        "cstdint": "c"
+    }
 }

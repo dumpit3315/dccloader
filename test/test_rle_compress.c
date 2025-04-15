@@ -11025,7 +11025,11 @@ int main(int argc, char *argv[]) {
 	while (ftell(f) < size) {
 		printf("RLE TEST: checking 0x%08x\n", (uint32_t)ftell(f));
 		fread(buf_raw, 1, block_size, f);
-		DN_Packet_Compress(buf_raw, block_size, buf_rle);
+		uint32_t rle_comp_size = DN_Packet_Compress(buf_raw, block_size, buf_rle);
+		printf("RLE TEST: Magic = %d\n", ((uint32_t *)(buf_rle))[0]);
+		printf("RLE TEST: Size = 0x%08X\n", ((uint32_t *)(buf_rle))[1]);
+		printf("RLE PAD: %d\n", (((rle_comp_size - 4) - ((uint32_t *)(buf_rle))[1])));
+		assert(((rle_comp_size - 4) >= ((uint32_t *)(buf_rle))[1]) && (((rle_comp_size - 4) - ((uint32_t *)(buf_rle))[1]) < 4));
 		rle_check(buf_raw, buf_rle + 8, block_size);
 	}
 
