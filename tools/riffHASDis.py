@@ -59,11 +59,11 @@ if __name__ == "__main__":
 
         elif cmd in [-17, -25]:
             offset, mask, expected, delay, branch = struct.unpack("<LLLLL", f.read(0x14))
-            print(f"{cmd} (READ and WAIT COND): ({hex(offset)} & {hex(mask)}) != {expected}, max: {delay}ms, SKIP {branch} INSTRUCTION if TRUE")
+            print(f"{cmd} (POLL_TIMEOUT): ({hex(offset)} & {hex(mask)}) == {expected}, max: {delay}ms, SKIP {branch} INSTRUCTION if TIMEOUT")
 
         elif cmd in [-18, -26]:
             offset, mask, expected, delay, branch = struct.unpack("<LLLLL", f.read(0x14))
-            print(f"{cmd} (READ and WAIT COND): ({hex(offset)} & {hex(mask)}) == {expected}, max: {delay}ms, SKIP {branch} INSTRUCTION if TRUE")
+            print(f"{cmd} (POLL): ({hex(offset)} & {hex(mask)}) == {expected}, max: {delay}ms, SKIP {branch} INSTRUCTION if TRUE")
 
         elif cmd == -54:
             offset, bits = struct.unpack("<LL", f.read(0x8))
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
         elif cmd == -39:
             mask, cond, branch = struct.unpack("<LLL", f.read(0xc))
-            print(f"{cmd} (COND): (a & {hex(mask)}) != {hex(cond)}, SKIP {branch} INSTRUCTION if TRUE")
+            print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if FALSE")
 
         elif cmd == -255:
             print(f"{cmd} (RETURN)")
