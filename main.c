@@ -14,6 +14,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     DCCMemory mem[16] = { 0 };
     uint32_t BUF_INIT[512];
     uint32_t dcc_init_offset = 0;
+    uint32_t ext_mem;
 
     for (int i = 0; i < 16; i++) {
         if (!devices[i].driver) break;
@@ -24,9 +25,11 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
         switch (mem[i].type) {
             case MEMTYPE_NOR:
             case MEMTYPE_SUPERAND:
-                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NOR(mem[i].page_size) << 16);
+                ext_mem = DCC_MEM_EXTENDED(1, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
+            WRITE_EXTMEM:
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | ((ext_mem & 0xffff) << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
-                BUF_INIT[dcc_init_offset++] = DCC_MEM_NOR_INFO(mem[i].block_size, mem[i].size >> 20, mem[i].page_size);
+                BUF_INIT[dcc_init_offset++] = ext_mem;
                 break;
 
             case MEMTYPE_NAND:
@@ -37,10 +40,8 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
             case MEMTYPE_ONENAND:
             case MEMTYPE_AND:
             case MEMTYPE_AG_AND:
-                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NAND_EX(mem[i].page_size) << 16);
-                BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
-                BUF_INIT[dcc_init_offset++] = DCC_MEM_NAND_EX_INFO(mem[i].block_size, mem[i].size >> 20, mem[i].page_size);
-                break;
+                ext_mem = DCC_MEM_EXTENDED(0, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
+                goto WRITE_EXTMEM;
 
             default:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
