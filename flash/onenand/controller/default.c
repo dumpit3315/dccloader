@@ -23,7 +23,7 @@ uint16_t OneNAND_Ctrl_Reg_Read(DCCMemory *mem, uint16_t reg) {
 }
 
 void OneNAND_Ctrl_Get_Data(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page_size, uint32_t spare_size) {
-    memcpy(page_buf, (uint8_t *)(mem->base_offset + (O1N_DATARAM << 1)), page_size);
-    memcpy(spare_buf, (uint8_t *)(mem->base_offset + (O1N_SPARERAM << 1)), spare_size);
+    PLAT_MEMCPY(page_buf, (uint8_t *)(mem->base_offset + (O1N_DATARAM << 1)), page_size);
+    PLAT_MEMCPY(spare_buf, (uint8_t *)(mem->base_offset + (O1N_SPARERAM << 1)), spare_size);
 }
 

@@ -220,7 +220,14 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
   return 1;
 };
 uint32_t DN_Packet_DCC_Read() {
-  return 0;
+  uint32_t count = 0;
+  uint32_t dat_read;
+  do {
+    printf("DCC READ: ");
+    count = scanf("%x", &dat_read);
+    scanf("%*[^\n]");
+  } while (count <= 0);
+  return dat_read;
 };
 #else
 #if \

@@ -62,7 +62,6 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
         if (ret_code == DCC_OK) break;
     }
 
-    // TODO: Detect Non-CFI by ID
     if (CFI_Type == 4) {
 #ifdef FAIL_ON_NON_CFI
         return DCC_PROBE_ERROR;
@@ -95,6 +94,37 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
 
     // 03 - Reset again and apply
     CFI_WRITE(offset, 0, CFI_Type == 2 ? 0xf0 : 0xff);
+
+    if (mem->manufacturer == 0x1c) { // Renesas flash chip
+        switch (mem->device_id >> 4) {
+            case 0x7: // Found in PNC DM-P100
+            case 0xf: // Found in Sanyo RL-4920
+                mem->size = 0x02000000;
+                break;
+
+            case 0xc: // Found in Sanyo SCP-3100
+                mem->size = 0x01000000;
+                break;
+
+            case 0x3: // Found in Sanyo PM-8200 (Overlaps with 4MB M5M29KB331ATP)
+            case 0xb: // Found in Audiovox CDM-8910
+                mem->size = 0x00800000;
+                break;
+
+            case 0x2: // Found in SCP-5150
+                mem->size = 0x00400000;
+                break;
+
+            case 0xa: // Found in SCP-5150
+            case 0x6: // M6MF16S2AVP datasheet
+                mem->size = 0x00200000;
+                break;
+
+            case 0x5: // M5M29FBT800FP datasheet
+                mem->size = 0x00100000;
+                break;
+        }
+    }
 
     return DCC_OK;
 }

@@ -2,8 +2,12 @@
 #include "flash/cfi/cfi.h"
 #include "devices.h"
 
-#define DCC_BUFFER_SIZE 0x20000
+#define DCC_BUFFER_SIZE 0x80000
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
+
+#ifdef DCC_TESTING
+extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
+#endif
 
 // dcc code
 void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
@@ -95,6 +99,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
 
                 if (flashIndex == 0) {
                 Jump_Read_NOR:
+#ifndef DCC_TESTING
                     switch (algo) {
                         case CMD_READ_COMP_NONE:
                             dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)srcOffset, srcSize, compBuf);
@@ -120,6 +125,9 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                             DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
                             continue;
                     }
+#else
+                    dcc_comp_packet_size = DCC_COMPRESS_MEMCPY(algo, srcOffset, srcSize, compBuf);
+#endif
                     
                     DN_Packet_Send(compBuf, dcc_comp_packet_size);
                 } else if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
@@ -156,7 +164,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 // break;
 
             default:
-                DN_Packet_Send_One(DCC_BAD_COMMAND(cmd));
+                DN_Packet_Send_One(DCC_BAD_COMMAND(cmd & 0xff));
         }
     }
 }
