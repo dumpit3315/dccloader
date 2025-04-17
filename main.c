@@ -2,9 +2,9 @@
 #include "flash/cfi/cfi.h"
 #include "devices.h"
 
-#define DCC_BUFFER_SIZE 0x80000
+#define DCC_BUFFER_SIZE 0x40000
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
-
+static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x1000];
 #ifdef DCC_TESTING
 extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
 #endif
@@ -58,6 +58,8 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     uint32_t flashIndex;
     uint32_t srcOffset;
     uint32_t srcSize;
+    DCC_RETURN res;
+    uint32_t destSize;
 
     while (1) {
         wdog_reset();
@@ -133,8 +135,44 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 } else if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
                     switch (mem[flashIndex - 1].type) {
                         case MEMTYPE_NAND:
-                            break; // Implement NAND page routines
+                        case MEMTYPE_ONENAND:
+                        case MEMTYPE_SUPERAND:
+                        case MEMTYPE_AND:
+                        case MEMTYPE_AG_AND:
+                            res = devices[flashIndex - 1].driver->read(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
+                            if (res != DCC_OK) {
+                                DN_Packet_Send_One(CMD_READ_RESP_FAIL(res));
+                                continue;
+                            }
+                            
+                            switch (algo) {
+                                case CMD_READ_COMP_NONE:
+                                    dcc_comp_packet_size = DN_Packet_CompressNone(rawBuf, destSize, compBuf);
+                                    break;
 
+                                case CMD_READ_COMP_RLE:
+                                    dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
+                                    break;
+
+                                #if HAVE_MINILZO
+                                case CMD_READ_COMP_LZO:
+                                    dcc_comp_packet_size = DN_Packet_Compress2(rawBuf, destSize, compBuf);
+                                    break;
+                                #endif
+
+                                #if HAVE_LZ4
+                                case CMD_READ_COMP_LZ4:
+                                    dcc_comp_packet_size = DN_Packet_Compress3(rawBuf, destSize, compBuf);
+                                    break;
+                                #endif
+
+                                default:
+                                    DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
+                                    continue;
+                            }
+
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                            break;
                         case MEMTYPE_NOR:
                         default:
                             srcOffset += mem[flashIndex - 1].base_offset;
