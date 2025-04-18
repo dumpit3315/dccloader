@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+#define BIT_SET(src, bm, value) ((src & ~((bm).bit_mask << (bm).bit_pos)) | ((value & (bm).bit_mask) << (bm).bit_pos))
+
 typedef struct {
     uint32_t bit_pos;
     uint32_t bit_mask;    
