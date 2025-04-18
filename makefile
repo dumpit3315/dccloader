@@ -97,7 +97,11 @@ DEVICES += flash/superand/superand.c
 CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
 endif
 
-SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c plat/wdog.c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
+ifndef PLATFORM
+PLATFORM = default
+endif
+
+SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
 ASRC = crt.s
@@ -176,6 +180,7 @@ help:
 	@echo 	LZO=1 = Enable LZO Compression
 	@echo 	LZ4=1 = Enable LZ4 Compression
 	@echo 	LWMEM=1 = Enable LWMEM memory management
+	@echo 	PLATFORM=(name) Select chipset platform
 	@echo 	CFI=1 = Enable CFI interface
 	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
 	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller

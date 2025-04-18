@@ -96,6 +96,8 @@ ResetHandler:
    ldr   sp, =__stack_svc_end
    add   sp, r0
 
+   bl plat_init
+
 #ifndef DONT_CLEAR_BSS
    /*
     * Clear .bss section
