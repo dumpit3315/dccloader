@@ -52,6 +52,7 @@ UADEFS =
 DEVICES = flash/mmap/mmap.c
 CONTROLLERS = 
 ADD_DEPS = 
+PLATFORM = default
 
 # Additional deps
 ifeq ($(LZO), 1)
@@ -95,10 +96,6 @@ endif
 ifdef SUPERAND_CONTROLLER
 DEVICES += flash/superand/superand.c
 CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
-endif
-
-ifndef PLATFORM
-PLATFORM = default
 endif
 
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
