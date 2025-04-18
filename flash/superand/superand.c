@@ -1,6 +1,6 @@
 #include "superand.h"
 #include "controller/controller.h"
-#include "../../dcc/dn_dcc_proto.h"
+#include "dcc/dn_dcc_proto.h"
 
 DCC_RETURN SuperAND_Probe(DCCMemory *mem, uint32_t offset) {
     return SuperAND_Ctrl_Probe(mem);

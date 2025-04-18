@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../dcc/dn_dcc_proto.h"
+#include "dcc/dn_dcc_proto.h"
 
 typedef struct {
 	uint32_t dev_id;
