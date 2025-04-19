@@ -135,7 +135,7 @@ MCFLAGS = -mcpu=$(MCU)
 
 ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
 CPFLAGS = $(MCFLAGS) -fPIC -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -nostartfiles -nostdlib -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -nostdlib -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
