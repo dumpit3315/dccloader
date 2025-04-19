@@ -2,11 +2,17 @@
 #include "flash/cfi/cfi.h"
 #include "devices.h"
 
+typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
+typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
+
 #define DCC_BUFFER_SIZE 0x40000
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x1000];
 #ifdef DCC_TESTING
 extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
+void *absolute_to_relative(void* ptr) { return ptr };
+#else
+extern void *absolute_to_relative(void *ptr);
 #endif
 
 // dcc code
@@ -15,11 +21,13 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     uint32_t BUF_INIT[512];
     uint32_t dcc_init_offset = 0;
     uint32_t ext_mem;
+    Driver *devBase;
+    DCC_RETURN res;
 
     for (int i = 0; i < 16; i++) {
         if (!devices[i].driver) break;
-
-        DCC_RETURN res = devices[i].driver->initialize(&mem[i], devices[i].base_offset);
+        devBase = (Driver *)absolute_to_relative(devices[i].driver);
+        res = ((DCC_INIT_PTR *)absolute_to_relative(devBase->initialize))(&mem[i], devices[i].base_offset);
         if (res != DCC_OK) mem[i].type = MEMTYPE_NONE;
 
         switch (mem[i].type) {
@@ -59,7 +67,6 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
     uint32_t flashIndex;
     uint32_t srcOffset;
     uint32_t srcSize;
-    DCC_RETURN res;
     uint32_t destSize;
 
     while (1) {
@@ -140,7 +147,8 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                         case MEMTYPE_SUPERAND:
                         case MEMTYPE_AND:
                         case MEMTYPE_AG_AND:
-                            res = devices[flashIndex - 1].driver->read(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
+                            devBase = (Driver *)absolute_to_relative(devices[flashIndex - 1].driver);
+                            res = ((DCC_READ_PTR *)absolute_to_relative(devBase->read))(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
                             if (res != DCC_OK) {
                                 DN_Packet_Send_One(CMD_READ_RESP_FAIL(res));
                                 continue;

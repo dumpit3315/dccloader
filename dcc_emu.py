@@ -204,7 +204,7 @@ if __name__ == '__main__':
         print("H:", hex(_dcc_read_host()))
         
     print("RUN")
-    _dcc_write_host(0x152 | 0xc0000000)
+    _dcc_write_host(0x152 | 0x00000000)
     _dcc_write_host(0x00120000)
     _dcc_write_host(0x00000080)
     

@@ -47,7 +47,7 @@ _vectors:
 
    .global ResetHandler
    .global ExitFunction
-   .global NorStartAddress
+   .global absolute_to_relative
    .extern dcc_main
    .extern __stack_und_end
 
@@ -165,6 +165,7 @@ bss_clear_loop:
    mrc   p14, 0, r0, cr1, cr0, 0
 #endif
 
+   /* Jump to Main */
    mov   r0, #0
    adr   r0, NorStartAddress1
    ldr   r0, [r0]
@@ -210,6 +211,14 @@ IRQHandler:
 
 FIQHandler:
    b FIQHandler
+
+/* PIC routines */
+absolute_to_relative:
+   push {R4-R7, LR} /* save registers */
+   mov   r4, #0
+   adr   r4, _vectors
+   add   r0, r4
+   pop {R4-R7, PC} /* restore registers and return */
 
    .weak ExitFunction
    .weak UndefHandler, PAbortHandler, DAbortHandler
