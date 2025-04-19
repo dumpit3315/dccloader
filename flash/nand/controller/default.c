@@ -127,7 +127,7 @@ DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf,
         NAND_Ctrl_Wait_Ready();
         if (!NAND_Ctrl_Check_Status()) return DCC_READ_ERROR;
 
-        for (int i = 0; i < (0x10 / (mem->bit_width / 8)); i++) {
+        for (int i = 0; i < (0x10 >> (mem->bit_width >> 4)); i++) {
             wdog_reset();
             if (mem->bit_width == 16) {
                 ((uint16_t *)(spare_buf))[i] = NAND_Ctrl_Data_Read();
@@ -147,7 +147,7 @@ DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf,
         NAND_Ctrl_Wait_Ready();
         if (!NAND_Ctrl_Check_Status()) return DCC_READ_ERROR;
 
-        for (int i = 0; i < (mem->page_size / (mem->bit_width / 8)); i++) {
+        for (int i = 0; i < (mem->page_size >> (mem->bit_width >> 4)); i++) {
             wdog_reset();
             if (mem->bit_width == 16) {
                 ((uint16_t *)(page_buf))[i] = NAND_Ctrl_Data_Read();
@@ -156,7 +156,7 @@ DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf,
             }
         }
 
-        for (int i = 0; i < ((mem->page_size / 0x20) / (mem->bit_width / 8)); i++) {
+        for (int i = 0; i < ((mem->page_size >> 5) >> (mem->bit_width >> 4)); i++) {
             wdog_reset();
             if (mem->bit_width == 16) {
                 ((uint16_t *)(spare_buf))[i] = NAND_Ctrl_Data_Read();

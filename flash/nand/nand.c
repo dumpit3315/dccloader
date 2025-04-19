@@ -18,7 +18,7 @@ DCC_RETURN NAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *de
         if (ret_code != DCC_OK) return ret_code;
         offset += mem->page_size;
         page_offset += mem->page_size;
-        spare_offset += mem->page_size / 0x20;
+        spare_offset += mem->page_size >> 5;
         size -= mem->page_size;
     } while (size);
 

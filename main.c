@@ -10,7 +10,7 @@ static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x1000];
 #ifdef DCC_TESTING
 extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
-void *absolute_to_relative(void* ptr) { return ptr };
+void *absolute_to_relative(void* ptr) { return ptr; };
 #else
 extern void *absolute_to_relative(void *ptr);
 #endif

@@ -69,7 +69,7 @@ DCC_RETURN SuperAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint32_t page) 
     SuperAND_Ctrl_Wait_Ready();
     if (!SuperAND_Ctrl_Check_Status()) return DCC_READ_ERROR;
 
-    for (int i = 0; i < (mem->page_size / (mem->bit_width / 8)); i++) {
+    for (int i = 0; i < (mem->page_size >> (mem->bit_width >> 4)); i++) {
         wdog_reset();
         if (mem->bit_width == 16) {
             ((uint16_t *)(page_buf))[i] = SuperAND_Ctrl_Data_Read();
