@@ -233,62 +233,56 @@ uint32_t DN_Packet_DCC_Read() {
 #if \
   ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
   || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
-uint32_t DN_Packet_DCC_Send(uint32_t data) {
-	volatile uint32_t dcc_reg;
+#define DCC_RBIT	(1 << 30)
+#define DCC_WBIT	(1 << 29)
 
-	do {
-    wdog_reset();
-		asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (dcc_reg) :);
-		/* operation controlled by master, cancel operation
-			 upon reception of data for immediate response */
-#ifdef CANCEL_WRITE_ON_DCC_READ_BIT
-		if (dcc_reg&0x40000000) return 0; // Cancel if the debugger sends any data to the DCC buffer.
-#endif
-	} while (dcc_reg&0x20000000); // Wait until the debugger reads the WB data, which sets the W bit to low.
+#define DCC_GET_STATUS(x) asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (x) :)
+#define DCC_WRITE(x) asm volatile ("mcr p14, 0, %0, C0, C5" : : "r" (x))
+#define DCC_READ(x) asm volatile ("mrc p14, 0, %0, C0, C5" : "=r" (x) :)
+#elif defined(CPU_XSCALE)
+#define DCC_RBIT	(1 << 31)
+#define DCC_WBIT	(1 << 28)
 
-	asm volatile ("mcr p14, 0, %0, C0, C5" : : "r" (data)); // Then, the host writes the data to the WB bit, setting the W bit to high.
-	return 1;
-};
-uint32_t DN_Packet_DCC_Read(void) {
-	volatile uint32_t dcc_reg;
-
-	do {
-    wdog_reset();
-		asm volatile ("mrc p14, 0, %0, C0, C1" : "=r" (dcc_reg) :);
-	} while ((dcc_reg&0x40000000) == 0); // When debugger sends the data to the DCC, the R bit was set to high.
-
-	asm volatile ("mrc p14, 0, %0, C0, C5" : "=r" (dcc_reg) :); // Then, the host reads the RB data, setting the R bit to low.
-	return dcc_reg;
-};
+#define DCC_GET_STATUS(x) asm volatile ("mrc p14, 0, %0, C14, C0" : "=r" (dcc_reg) :)
+#define DCC_WRITE(x) asm volatile ("mcr p14, 0, %0, C8, C0" : : "r" (data))
+#define DCC_READ(x) asm volatile ("mrc p14, 0, %0, C9, C0" : "=r" (dcc_reg) :)
 #else
+#define DCC_RBIT	(1 << 0)
+#define DCC_WBIT	(1 << 1)
+
+#define DCC_GET_STATUS(x) asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (x) :)
+#define DCC_WRITE(x) asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (x))
+#define DCC_READ(x) asm volatile ("mrc p14, 0, %0, C1, C0" : "=r" (x) :)
+#endif
+
 uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	volatile uint32_t dcc_reg;
 
 	do {
     wdog_reset();
-		asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (dcc_reg) :);
+		DCC_GET_STATUS(dcc_reg);
 		/* operation controlled by master, cancel operation
 			 upon reception of data for immediate response */
 #ifdef CANCEL_WRITE_ON_DCC_READ_BIT
-		if (dcc_reg&1) return 0; // Cancel if the debugger sends any data to the DCC buffer.
+		if (dcc_reg & DCC_RBIT) return 0; // Cancel if the debugger sends any data to the DCC buffer.
 #endif
-	} while (dcc_reg&2); // Wait until the debugger reads the WB data, which sets the W bit to low.
+	} while (dcc_reg & DCC_WBIT); // Wait until the debugger reads the WB data, which sets the W bit to low.
 
-	asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (data)); // Then, the host writes the data to the WB bit, setting the W bit to high.
+	DCC_WRITE(data); // Then, the host writes the data to the WB bit, setting the W bit to high.
 	return 1;
 };
+
 uint32_t DN_Packet_DCC_Read(void) {
 	volatile uint32_t dcc_reg;
 
 	do {
     wdog_reset();
-		asm volatile ("mrc p14, 0, %0, C0, C0" : "=r" (dcc_reg) :);
-	} while ((dcc_reg&1) == 0); // When debugger sends the data to the DCC, the R bit was set to high.
+		DCC_GET_STATUS(dcc_reg);
+	} while ((dcc_reg & DCC_RBIT) == 0); // When debugger sends the data to the DCC, the R bit was set to high.
 
-	asm volatile ("mrc p14, 0, %0, C1, C0" : "=r" (dcc_reg) :); // Then, the host reads the RB data, setting the R bit to low.
+	DCC_READ(dcc_reg); // Then, the host reads the RB data, setting the R bit to low.
 	return dcc_reg;
 };
-#endif
 #endif
 
 void DN_Packet_Send(uint8_t *src, uint32_t size) {

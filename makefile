@@ -98,6 +98,11 @@ DEVICES += flash/superand/superand.c
 CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
 endif
 
+ifeq ($(MCU), xscale)
+DDEFS += -DCPU_XSCALE
+DADEFS += -DCPU_XSCALE
+endif
+
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
