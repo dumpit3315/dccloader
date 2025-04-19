@@ -16,11 +16,11 @@ void *memcpy(void *dst, const void *src, size_t len)
 
 void *memset(void *dst, int val, size_t count)
 {
-	uint8_t *d = dst;
+	register uint8_t *ptr = (uint8_t *)dst;
 
-	while (count--)  {
-		*d = (uint8_t)val;
-		d++;
+	while (count-- > 0) {
+		if ((count & 0x1ff) == 0x1ff) wdog_reset();
+	  	*ptr++ = val;
 	}
 
 	return dst;

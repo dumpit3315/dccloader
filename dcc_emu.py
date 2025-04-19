@@ -124,16 +124,18 @@ def test_arm():
         mu.hook_add(UC_HOOK_CODE, hook_code)
         
         def on_read(mu, access, address, size, value, data):
-            if DEBUG and address <= 0x14000000:
+            #if DEBUG and address <= 0x14000000:
+            if DEBUG:
                 print("Read at", hex(address), size, mu.mem_read(address, size))
 
         def on_write(mu, access, address, size, value, data):
-            if DEBUG and address <= 0x14000000:
-                if address == 0xaaa and value == 0x98:
-                    mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read())
-                    
-                elif address == 0xaaa and value == 0x90:
-                    mu.mem_write(0x00000000, b"\x01\x00\x7e\x22")
+            if DEBUG:
+                if address <= 0x14000000:
+                    if address == 0xaaa and value == 0x98:
+                        mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read())
+                        
+                    elif address == 0xaaa and value == 0x90:
+                        mu.mem_write(0x00000000, b"\x01\x00\x7e\x22")
                 # mu.reg_write(0x)
                 print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
