@@ -199,7 +199,11 @@ if __name__ == '__main__':
     t = threading.Thread(target=test_arm, daemon=True)
     t.start()
     
-    for _ in range(7):
+    while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
+    iCount = _dcc_read_host()
+    print("C:", hex(iCount))
+    
+    for _ in range(iCount + 1):
         while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
         print("H:", hex(_dcc_read_host()))
         
