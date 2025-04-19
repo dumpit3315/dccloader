@@ -214,11 +214,10 @@ FIQHandler:
 
 /* PIC routines */
 absolute_to_relative:
-   push {R4-R7, LR} /* save registers */
-   mov   r4, #0
-   adr   r4, _vectors
-   add   r0, r4
-   pop {R4-R7, PC} /* restore registers and return */
+   mov   r1, #0
+   adr   r1, _vectors
+   add   r0, r1
+   bx lr
 
    .weak ExitFunction
    .weak UndefHandler, PAbortHandler, DAbortHandler
