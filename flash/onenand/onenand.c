@@ -66,7 +66,7 @@ DCC_RETURN OneNAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t 
     uint32_t spare_offset = size;
     DCC_RETURN ret_code;
 
-    if (size % mem->page_size) return DCC_INVALID_ARGS;
+    if (size & (mem->page_size - 1)) return DCC_INVALID_ARGS;
     
     do {
         ret_code = OneNAND_Read_Upper(mem, dest + page_offset, dest + spare_offset, offset >> DN_Log2(mem->page_size));

@@ -2,8 +2,7 @@
 
 #include "../onenand.h"
 #include "controller.h"
-#include "stdint.h"
-#include "memory.h"
+#include <stdint.h>
 #include "dcc/dn_dcc_proto.h"
 
 void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset) {

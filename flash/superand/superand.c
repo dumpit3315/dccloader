@@ -10,7 +10,7 @@ DCC_RETURN SuperAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t
     uint32_t page_offset = 0;
     DCC_RETURN ret_code;
 
-    if (size % mem->page_size) return DCC_INVALID_ARGS;
+    if (size & (mem->page_size - 1)) return DCC_INVALID_ARGS;
     
     do {
         ret_code = SuperAND_Ctrl_Read(mem, dest + page_offset, offset >> DN_Log2(mem->page_size));
