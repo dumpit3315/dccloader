@@ -37,8 +37,9 @@ if __name__ == "__main__":
             offset, mask, data = struct.unpack("<LLL", f.read(12))
             print(f"{cmd} (READ OR): (v({hex(offset)}) & ~{hex(mask)}) | {hex(data)}")
 
-        elif cmd == -250: # Unknown 2
-            print(f"{cmd}: {f.read(4)}")
+        elif cmd == -250:
+            arg = int.from_bytes(f.read(4), "little")
+            print(f"{cmd}: (SET ARGS) {arg}")
 
         elif cmd == -19:
             code = int.from_bytes(f.read(4), "little")

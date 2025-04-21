@@ -72,7 +72,9 @@ if __name__ == "__main__":
             #print(f"{cmd} (READ OR): (v({hex(offset)}) & ~{hex(mask)}) | {hex(data)}")
 
         elif cmd == -250: # Unknown 2
-            instr[ip].append(f"// {cmd}: {f.read(4)}")
+            arg = int.from_bytes(f.read(4), "little")
+            instr[ip].append(f"&param=0x{arg:08x}")
+            #instr[ip].append(f"// {cmd}: {f.read(4)}")
 
         elif cmd == -19:
             pos = int.from_bytes(f.read(4), "little", signed=True) + 1
