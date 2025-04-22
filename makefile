@@ -103,6 +103,12 @@ DDEFS += -DCPU_XSCALE
 DADEFS += -DCPU_XSCALE
 endif
 
+ifeq ($(USE_ICACHE), 1)
+DADEFS += -DUSE_ICACHE=1
+else
+DADEFS += -DUSE_ICACHE=0
+endif
+
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
@@ -187,6 +193,7 @@ help:
 	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
 	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
 	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
+	@echo 	USE_ICACHE=1 = Use instruction cache (ARM9 and later)
 
 #
 # Include the dependency files, should be the last of the makefile

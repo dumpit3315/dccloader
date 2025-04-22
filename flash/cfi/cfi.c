@@ -1,3 +1,5 @@
+// CFI compliant NOR Memory interface
+
 #include "cfi.h"
 #include "dcc/dn_dcc_proto.h"
 

@@ -1,3 +1,5 @@
+// Memory dump interface
+
 #include "mmap.h"
 #include "dcc/dn_dcc_proto.h"
 
