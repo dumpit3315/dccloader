@@ -7,7 +7,7 @@ void *memcpy(void *dst, const void *src, size_t len)
 	char *d = dst;
 
 	while (len--) {
-        if ((len & 0x1ff) == 0x1ff) wdog_reset();
+        if ((len & 0x3f) == 0x3f) wdog_reset();
 		*d++ = *s++;
     }
 
@@ -19,7 +19,7 @@ void *memset(void *dst, int val, size_t count)
 	register uint8_t *ptr = (uint8_t *)dst;
 
 	while (count-- > 0) {
-		if ((count & 0x1ff) == 0x1ff) wdog_reset();
+		if ((count & 0x3f) == 0x3f) wdog_reset();
 	  	*ptr++ = val;
 	}
 
@@ -45,7 +45,7 @@ void *memmove(void *dst, const void *src, size_t len)
 		const char *s = (const char *)src + len;
 		char *d = (char *)dst + len;
 		while (d != end) {
-            if (((size_t)d & 0x1ff) == 0x1ff) wdog_reset();
+            if (((size_t)d & 0x3f) == 0x3f) wdog_reset();
 			*--d = *--s;
         }
 	}
@@ -60,7 +60,7 @@ int memcmp(const void *s1, const void *s2, size_t len)
 	unsigned char dc;
 
 	while (len--) {
-        if ((len & 0x1ff) == 0x1ff) wdog_reset();
+        if ((len & 0x3f) == 0x3f) wdog_reset();
 		sc = *s++;
 		dc = *d++;
 		if (sc - dc)

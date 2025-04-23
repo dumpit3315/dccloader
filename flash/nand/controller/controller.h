@@ -68,6 +68,14 @@ static nand_info flash_ids[] = {
 };
 
 typedef enum {
+	NAND_STATUS_FAIL = 0x01,
+	NAND_STATUS_FAIL_N1 = 0x02,
+	NAND_STATUS_TRUE_READY = 0x20,
+	NAND_STATUS_READY = 0x40,
+	NAND_STATUS_WP = 0x80,
+} NANDStatus;
+
+typedef enum {
 	/* Standard NAND flash commands */
 	NAND_CMD_READ0 = 0x0,
 	NAND_CMD_READ1 = 0x1,
