@@ -6,8 +6,8 @@ typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
 typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
 
 #define DCC_BUFFER_SIZE 0x40000
-static uint8_t compBuf[DCC_BUFFER_SIZE + 0x1000];
-static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x1000];
+static uint8_t compBuf[DCC_BUFFER_SIZE + 0x2000];
+static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
 #ifdef DCC_TESTING
 extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
 void *absolute_to_relative(void* ptr) { return ptr; };
@@ -198,17 +198,39 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 srcSize = DN_Packet_DCC_Read();
                 flashIndex = (cmd >> 8) & 0xff;
 
-                DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
+                if (flashIndex == 0) flashIndex = 1;
+
+                if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
+                    // TODO: Erasing
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex));
+                } else {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_FLASH_NOENT, flashIndex));
+                }
                 break;
 
             case CMD_WRITE:
-                // uint32_t pAddrStart = DN_Packet_DCC_Read();
-                // uint32_t dataPackN = DN_Packet_DCC_Read();
-                // uint8_t progType = (cmd >> 8) & 0xff;
-                // uint8_t flashIndex = (cmd >> 16) & 0xff;
+                uint32_t pAddrStart = DN_Packet_DCC_Read();
+                uint32_t dataPackN = DN_Packet_DCC_Read();
+                uint8_t progType = (cmd >> 8) & 0xff;
+                flashIndex = (cmd >> 16) & 0xff;
 
-                // DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex)); // TODO
-                // break;
+                if (flashIndex == 0) flashIndex = 1;
+
+                if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
+                    if (dataPackN == CMD_WRITE_COMP_NONE) {
+                        DN_Packet_Read(rawBuf, mem[flashIndex - 1].block_size);
+                        DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                    } else {
+                        uint32_t comp_len = DN_Packet_DCC_Read();
+                        DN_Packet_Read(compBuf, (comp_len + 3) & 0xfffffffc);
+                    }
+                    uint32_t checksum = DN_Packet_DCC_Read();
+                    // TODO: Writing
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex));
+                } else {
+                    DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_FLASH_NOENT, flashIndex));
+                }
+                break;
 
             default:
                 DN_Packet_Send_One(DCC_BAD_COMMAND(cmd & 0xff));
