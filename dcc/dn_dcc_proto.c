@@ -307,6 +307,15 @@ void DN_Packet_Send_One(uint32_t data) {
   DN_Packet_DCC_Send(checksum);
 }
 
+void DN_Packet_Read(uint8_t *dest, uint32_t size) {
+  if (size & 3) return; // Must be dword aligned
+  
+  for (uint32_t dst_offset = 0; dst_offset < (size >> 2); dst_offset++) {
+    wdog_reset();
+    ((uint32_t *)(dest))[dst_offset] = DN_Packet_DCC_Read();
+  }
+}
+
 /* 04 - Utilities */
 uint32_t DN_Log2(uint32_t value)
 {
