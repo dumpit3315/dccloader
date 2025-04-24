@@ -18,6 +18,7 @@ extern void *absolute_to_relative(void *ptr);
 // dcc code
 void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
     DCCMemory mem[16] = { 0 };
+    uint8_t mem_has_spare[16] = { 0 };
     uint32_t BUF_INIT[512];
     uint32_t dcc_init_offset = 0;
     uint32_t ext_mem;
@@ -34,6 +35,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
             case MEMTYPE_NOR:
             case MEMTYPE_SUPERAND:
                 ext_mem = DCC_MEM_EXTENDED(1, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
+                mem_has_spare[i] = 0;
             WRITE_EXTMEM:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | ((ext_mem & 0xffff) << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
@@ -43,17 +45,20 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
             case MEMTYPE_NAND:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (mem[i].page_size << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
+                mem_has_spare[i] = 1;
                 break;
 
             case MEMTYPE_ONENAND:
             case MEMTYPE_AND:
             case MEMTYPE_AG_AND:
                 ext_mem = DCC_MEM_EXTENDED(0, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
+                mem_has_spare[i] = 1;
                 goto WRITE_EXTMEM;
 
             default:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
                 BUF_INIT[dcc_init_offset++] = 0;
+                mem_has_spare[i] = 0;
 
         }
     }
@@ -211,15 +216,17 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
             case CMD_WRITE:
                 uint32_t pAddrStart = DN_Packet_DCC_Read();
                 uint32_t dataPackN = DN_Packet_DCC_Read();
-                uint8_t progType = (cmd >> 8) & 0xff;
+                uint8_t progType = (cmd >> 8) & 0x7f;
+                uint8_t useECC = (cmd >> 8) & 0x80;
+
                 flashIndex = (cmd >> 16) & 0xff;
 
                 if (flashIndex == 0) flashIndex = 1;
 
                 if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
                     if (dataPackN == CMD_WRITE_COMP_NONE) {
-                        DN_Packet_Read(rawBuf, mem[flashIndex - 1].block_size);
-                        DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                        if (progType & 2) DN_Packet_Read(rawBuf, mem[flashIndex - 1].block_size);
+                        if ((progType & 1) && mem_has_spare[flashIndex - 1]) DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
                     } else {
                         uint32_t comp_len = DN_Packet_DCC_Read();
                         DN_Packet_Read(compBuf, (comp_len + 3) & 0xfffffffc);
