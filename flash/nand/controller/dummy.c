@@ -5,7 +5,7 @@ static uint32_t nand_cur_cmd;
 static uint32_t nand_addr_count;
 static uint32_t idcode;
 
-void NAND_Ctrl_Command_Write(uint8_t cmd) {
+void inline NAND_Ctrl_Command_Write(uint8_t cmd) {
     // Write command routines
     wdog_reset();
     nand_cur_cmd = cmd;
@@ -51,12 +51,12 @@ uint16_t NAND_Ctrl_Data_Read() {
     return 0;
 }
 
-void NAND_Ctrl_Wait_Ready() {
+void inline NAND_Ctrl_Wait_Ready() {
     // Busy assert routines
     wdog_reset();
 }
 
-uint32_t NAND_Ctrl_Check_Status() {
+uint32_t inline NAND_Ctrl_Check_Status() {
     return 1;
 }
 

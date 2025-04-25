@@ -1,28 +1,28 @@
 /* Nand controller template */
 #include "controller.h"
 
-void NAND_Ctrl_Command_Write(uint8_t cmd) {
+void inline NAND_Ctrl_Command_Write(uint8_t cmd) {
     // Write command routines
     wdog_reset();
 }
 
-void NAND_Ctrl_Address_Write(uint8_t addr) {
+void inline NAND_Ctrl_Address_Write(uint8_t addr) {
     // Write address routines
     wdog_reset();
 }
 
-uint16_t NAND_Ctrl_Data_Read() {
+uint16_t inline NAND_Ctrl_Data_Read() {
     // Data read routines
     wdog_reset();
     return 0;
 }
 
-void NAND_Ctrl_Wait_Ready() {
+void inline NAND_Ctrl_Wait_Ready() {
     // Busy assert routines
     wdog_reset();
 }
 
-uint32_t NAND_Ctrl_Check_Status() {
+uint32_t inline NAND_Ctrl_Check_Status() {
     return 1;
 }
 

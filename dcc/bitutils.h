@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #define BIT_SET(src, bm, value) ((src & ~((bm).bit_mask << (bm).bit_pos)) | ((value & (bm).bit_mask) << (bm).bit_pos))
+#define BIT_SET_VAR(src, bm, value) (src) = BIT_SET(src, bm, value);
 
 typedef struct {
     uint32_t bit_pos;

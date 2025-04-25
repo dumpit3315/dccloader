@@ -107,6 +107,7 @@ typedef struct {
 #define DCC_WUPROT_TIMEOUT 0x2F // Write unprotect timeout
 #define DCC_WUPROT_ERROR   0x30 // Write unprotect failed
 #define DCC_W_UNK_ERROR    0x31 // Unknown write error, Please file a bug report
+#define DCC_UNK_ERROR      0x32 // Unknown error, may happen if the flash is not completely initialized.
 #define DCC_FLASH_NOENT    0x37 // Flash with this ID is not probed/not found
 #define DCC_WPROT_ERROR    0x3C // Read-only memory or Write/Erase routines not implemented
 #define DCC_NOMEM_ERROR    0x3D // Not enough memory
