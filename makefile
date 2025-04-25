@@ -159,16 +159,16 @@ all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o build/$@
 
 %hex: %elf
-	$(HEX) $< $@
+	$(HEX) build/$< build/$@
 
 %bin: %elf
-	$(BIN) $< $@
+	$(BIN) build/$< build/$@
 
 %.lst: %.elf
-	$(OBJDUMP) -h -S $< > $@
+	$(OBJDUMP) -h -S build/$< > build/$@
 
 clean:
 	-rm -f $(OBJS)
