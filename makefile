@@ -189,6 +189,7 @@ help:
 	@echo 	LZ4=1 = Enable LZ4 Compression
 	@echo 	LWMEM=1 = Enable LWMEM memory management
 	@echo 	PLATFORM=(name) Select chipset platform
+	@echo	MCU=(MCU) = Select CPU architecture
 	@echo 	CFI=1 = Enable CFI interface
 	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
 	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
