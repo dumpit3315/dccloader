@@ -105,7 +105,7 @@ def test_arm():
         mu.mem_map(0x14000000, 2 * 1024 * 1024)
 
         # write machine code to be emulated to memory
-        mu.mem_write(0x14000000, open("dumpnow.bin", "rb").read())              
+        mu.mem_write(0x14000000, open("build/dumpnow.bin", "rb").read())              
         #mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read()) 
         #mu.mem_write(0x00000000, b"\x01\x00\x7e\x22") # Infineon NOR
         mu.mem_write(0x14000020, b"\x00\x00\x00\x00") # Infineon NOR
