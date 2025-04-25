@@ -141,7 +141,7 @@ MCFLAGS = -mcpu=$(MCU)
 
 ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
 CPFLAGS = $(MCFLAGS) -fPIC -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -nostdlib -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -nostdlib -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
@@ -172,11 +172,11 @@ all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
 
 clean:
 	-rm -f $(OBJS)
-	-rm -f $(PROJECT).elf
-	-rm -f $(PROJECT).map
-	-rm -f $(PROJECT).hex
-	-rm -f $(PROJECT).bin
-	-rm -f $(PROJECT).lst
+	-rm -f build/$(PROJECT).elf
+	-rm -f build/$(PROJECT).map
+	-rm -f build/$(PROJECT).hex
+	-rm -f build/$(PROJECT).bin
+	-rm -f build/$(PROJECT).lst
 	-rm -f $(SRC:.c=.c.bak)
 	-rm -f $(SRC:.c=.lst)
 	-rm -f $(ASRC:.s=.s.bak)
