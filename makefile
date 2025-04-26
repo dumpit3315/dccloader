@@ -197,13 +197,13 @@ help:
 	@echo 	LZ4=1 = Enable LZ4 Compression
 	@echo 	LWMEM=1 = Enable LWMEM memory management
 	@echo 	PLATFORM=(name) Select chipset platform
-	@echo	MCU=(MCU) = Select CPU architecture
+	@echo 	MCU=(MCU) = Select CPU architecture
 	@echo 	CFI=1 = Enable CFI interface
 	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
 	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
 	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
 	@echo 	USE_ICACHE=1 = Use instruction cache (ARM9 and later)
-	@echo	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help
+	@echo 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help
 
 #
 # Include the dependency files, should be the last of the makefile

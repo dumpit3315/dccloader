@@ -65,6 +65,7 @@ NorStartAddress3:  .word 0x12345678
 DCC_PKT_RW_SIZE:   .word 0xffffffff
 DCC_PKT_RW_DATA:   .word 0xffffffff
 DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
+.word 0x12345678
 #endif
 #if HAVE_LWMEM
 lwmem_init:
