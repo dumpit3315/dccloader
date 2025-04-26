@@ -109,6 +109,14 @@ else
 DADEFS += -DUSE_ICACHE=0
 endif
 
+ifeq ($(BP_LOADER), 1)
+DADEFS += -DUSE_BREAKPOINTS=1
+DDEFS += -DUSE_BREAKPOINTS=1
+else
+DADEFS += -DUSE_BREAKPOINTS=0
+DDEFS += -DUSE_BREAKPOINTS=0
+endif
+
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
@@ -195,6 +203,7 @@ help:
 	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
 	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
 	@echo 	USE_ICACHE=1 = Use instruction cache (ARM9 and later)
+	@echo	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help
 
 #
 # Include the dependency files, should be the last of the makefile

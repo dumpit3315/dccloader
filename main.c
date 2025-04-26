@@ -5,7 +5,6 @@
 typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
 typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
 
-#define DCC_BUFFER_SIZE 0x40000
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x2000];
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
 #ifdef DCC_TESTING
@@ -16,7 +15,7 @@ extern void *absolute_to_relative(void *ptr);
 #endif
 
 // dcc code
-void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3, uint32_t BaseAddress4) {
+void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3) {
     DCCMemory mem[16] = { 0 };
     uint8_t mem_has_spare[16] = { 0 };
     uint32_t BUF_INIT[512];

@@ -229,6 +229,15 @@ uint32_t DN_Packet_DCC_Read() {
   } while (count <= 0);
   return dat_read;
 };
+#elif USE_BREAKPOINTS
+static uint8_t cmdBuf[DCC_BUFFER_SIZE + 0x4000];
+static uint32_t *cmdReadBuf;
+extern uint32_t *DN_Packet_DCC_WaitForBP(void);
+extern void DN_Packet_DCC_ResetBPP(uint8_t *command_buf);
+extern uint32_t DN_Packet_DCC_Send(uint32_t data);
+uint32_t DN_Packet_DCC_Read(void) {
+  return *cmdReadBuf++;
+};
 #else
 #if \
   ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
@@ -254,7 +263,6 @@ uint32_t DN_Packet_DCC_Read() {
 #define DCC_WRITE(x) asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (x))
 #define DCC_READ(x) asm volatile ("mrc p14, 0, %0, C1, C0" : "=r" (x) :)
 #endif
-
 uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	volatile uint32_t dcc_reg;
 
@@ -289,6 +297,10 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   if (size & 3) return; // Must be dword aligned
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
 
+#if USE_BREAKPOINTS
+  DN_Packet_DCC_ResetBPP(cmdBuf);
+#endif
+
   DN_Packet_DCC_Send(size >> 2);
   for (uint32_t src_offset = 0; src_offset < (size >> 2); src_offset++) {
     wdog_reset();
@@ -296,15 +308,25 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   }
 
   DN_Packet_DCC_Send(checksum);
+#if USE_BREAKPOINTS
+  cmdReadBuf = DN_Packet_DCC_WaitForBP();
+#endif
 }
 
 void DN_Packet_Send_One(uint32_t data) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, (uint8_t *)&data, 4);
 
+#if USE_BREAKPOINTS
+  DN_Packet_DCC_ResetBPP(cmdBuf);
+#endif
+
   DN_Packet_DCC_Send(1);
   DN_Packet_DCC_Send(data);
   
   DN_Packet_DCC_Send(checksum);
+#if USE_BREAKPOINTS
+  cmdReadBuf = DN_Packet_DCC_WaitForBP();
+#endif
 }
 
 void DN_Packet_Read(uint8_t *dest, uint32_t size) {

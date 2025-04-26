@@ -1,6 +1,7 @@
 #pragma once
 #include "plat.h"
 
+#define DCC_BUFFER_SIZE 0x40000
 typedef uint32_t DCC_RETURN;
 
 typedef enum {

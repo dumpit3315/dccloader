@@ -48,6 +48,11 @@ _vectors:
    .global ResetHandler
    .global ExitFunction
    .global absolute_to_relative
+#if USE_BREAKPOINTS
+   .global DN_Packet_DCC_WaitForBP
+   .global DN_Packet_DCC_ResetBPP
+   .global DN_Packet_DCC_Send
+#endif
    .extern dcc_main
    .extern __stack_und_end
 
@@ -55,7 +60,12 @@ _vectors:
 NorStartAddress1:  .word 0x12345678
 NorStartAddress2:  .word 0x12345678
 NorStartAddress3:  .word 0x12345678
-NorStartAddress4:  .word 0x12345678
+/* Loader via H/W BP polling */
+#if USE_BREAKPOINTS
+DCC_PKT_RW_SIZE:   .word 0xffffffff
+DCC_PKT_RW_DATA:   .word 0xffffffff
+DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
+#endif
 #if HAVE_LWMEM
 lwmem_init:
    .word 0x00020000
@@ -102,7 +112,7 @@ ResetHandler:
    || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) ))
    mrc   p15, 0, r0, cr1, cr0, 0
    orr   r0, #0x1000
-   mrc   p15, 0, r0, cr1, cr0, 0
+   mcr   p15, 0, r0, cr1, cr0, 0
 #endif
 
    bl plat_init
@@ -189,10 +199,6 @@ bss_clear_loop:
    adr   r2, NorStartAddress3
    ldr   r2, [r2]
 
-   mov   r3, #0
-   adr   r3, NorStartAddress4
-   ldr   r3, [r3]
-   
    b dcc_main
 
 ExitFunction:
@@ -230,8 +236,63 @@ absolute_to_relative:
    add   r0, r1
    bx lr
 
-   .weak ExitFunction
-   .weak UndefHandler, PAbortHandler, DAbortHandler
-   .weak IRQHandler, FIQHandler
+/* Breakpoint loader routines */
+#if USE_BREAKPOINTS
+DN_Packet_DCC_WaitForBP:
+   b DN_Packet_DCC_WaitForBP
+   mov   r0, #0
+   adr   r0, DCC_PKT_RW_DATA
+   ldr   r0, [r0]
+   bx lr
+
+DN_Packet_DCC_ResetBPP:
+   mov   r2, #0
+   
+   /* Reset size */
+   mov   r1, #0
+   adr   r1, DCC_PKT_RW_SIZE
+   str   r2, [r1]
+   
+   /* Write offset data */
+   mov   r1, #0
+   adr   r1, DCC_PKT_RW_DATA
+   str   r0, [r1]
+
+   bx lr
+
+DN_Packet_DCC_Send:   
+   /* 01 - Data */
+   mov   r1, #0
+   adr   r1, DCC_PKT_RW_DATA
+   ldr   r1, [r1]
+
+   /* 02 - Size */
+   mov   r2, #0
+   adr   r2, DCC_PKT_RW_SIZE
+   ldr   r2, [r2]
+
+   /* 03 - Writing */
+   add   r1, r2
+   str   r0, [r1]
+
+   /* 04 - Increment */
+   mov   r1, #4
+   add   r2, r1
+
+   /* 05 - Update */
+   mov   r1, #0
+   adr   r1, DCC_PKT_RW_SIZE
+   str   r2, [r1]
+
+   /* 06 - End */
+   mov   r0, #1
+   bx lr
+#endif
+
+/* End */
+.weak ExitFunction
+.weak UndefHandler, PAbortHandler, DAbortHandler
+.weak IRQHandler, FIQHandler
+
 .ltorg
 /*** EOF ***/
