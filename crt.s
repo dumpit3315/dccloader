@@ -111,9 +111,9 @@ ResetHandler:
    && (( defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5T__) || defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__) ) \
    || ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
    || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) ))
-   mrc   p15, 0, r0, cr1, cr0, 0
-   orr   r0, #0x1000
-   mcr   p15, 0, r0, cr1, cr0, 0
+   mrc   p15, 0, r1, cr1, cr0, 0
+   orr   r1, #0x1000
+   mcr   p15, 0, r1, cr1, cr0, 0
 #endif
 
    bl plat_init
