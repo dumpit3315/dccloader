@@ -108,7 +108,7 @@ def test_arm():
         mu.mem_write(0x14000000, open("build/dumpnow.bin", "rb").read())              
         #mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read()) 
         #mu.mem_write(0x00000000, b"\x01\x00\x7e\x22") # Infineon NOR
-        mu.mem_write(0x14000020, b"\x00\x00\x00\x00") # Infineon NOR
+        #mu.mem_write(0x14000020, b"\x00\x00\x00\x00") # Infineon NOR
         #mu.mem_write(0x00000020, b"Q\0R\0Y\0\x02\0\0\0")
         #mu.mem_write(0x0000004e, (23).to_bytes(2, "little"))
 
@@ -136,6 +136,9 @@ def test_arm():
                         
                     elif address == 0xaaa and value == 0x90:
                         mu.mem_write(0x00000000, b"\x01\x00\x7e\x22")
+                        
+                    elif address == 0x0 and value == 0xf0:
+                        mu.mem_write(0x00000000, open("build/dumpnow.bin", "rb").read())
                 # mu.reg_write(0x)
                 print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
