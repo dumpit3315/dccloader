@@ -298,7 +298,7 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
 
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP(cmdBuf);
+  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
 #endif
 
   DN_Packet_DCC_Send(size >> 2);
@@ -317,7 +317,7 @@ void DN_Packet_Send_One(uint32_t data) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, (uint8_t *)&data, 4);
 
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP(cmdBuf);
+  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
 #endif
 
   DN_Packet_DCC_Send(1);
