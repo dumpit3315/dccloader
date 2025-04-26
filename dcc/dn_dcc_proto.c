@@ -233,7 +233,7 @@ uint32_t DN_Packet_DCC_Read() {
 static uint8_t cmdBuf[DCC_BUFFER_SIZE + 0x4000];
 static uint32_t *cmdReadBuf;
 extern uint32_t *DN_Packet_DCC_WaitForBP(void);
-extern void DN_Packet_DCC_ResetBPP(uint8_t *command_buf);
+extern void DN_Packet_DCC_ResetBPP(uint32_t *command_buf);
 extern uint32_t DN_Packet_DCC_Send(uint32_t data);
 uint32_t DN_Packet_DCC_Read(void) {
   return *cmdReadBuf++;
