@@ -128,12 +128,12 @@ DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf,
 
     if (mem->page_size <= 512) {
         WRITE_U32(PXA3_REG_NDCB0, PXA3_CMD(NAND_CMD_READ0, PXA3_NDCB_TYPE_READ, 4));
-        WRITE_U32(PXA3_REG_NDCB1, (page << 8) & 0xffffffff);
-        WRITE_U32(PXA3_REG_NDCB2, (page >> 24) & 0xffffffff);
+        WRITE_U32(PXA3_REG_NDCB1, page << 8);
+        WRITE_U32(PXA3_REG_NDCB2, page >> 24);
     } else {
         WRITE_U32(PXA3_REG_NDCB0, PXA3_CMD_DBC(NAND_CMD_READ0, NAND_CMD_READSTART, PXA3_NDCB_TYPE_READ, 5));
-        WRITE_U32(PXA3_REG_NDCB1, (page << 16) & 0xffffffff);
-        WRITE_U32(PXA3_REG_NDCB2, (page >> 16) & 0xffffffff);
+        WRITE_U32(PXA3_REG_NDCB1, page << 16);
+        WRITE_U32(PXA3_REG_NDCB2, page >> 16);
     }
     
     do { wdog_reset(); } while (!(GET_BIT32(PXA3_REG_NDSR, PXA3_NDSR_RDDREQ)));

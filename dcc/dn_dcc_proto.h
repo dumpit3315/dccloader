@@ -2,6 +2,9 @@
 #include "plat.h"
 
 #define DCC_BUFFER_SIZE 0x40000
+#define ALIGN2(x) ((x + 1) & ~1)
+#define ALIGN4(x) ((x + 3) & ~3)
+
 typedef uint32_t DCC_RETURN;
 
 typedef enum {

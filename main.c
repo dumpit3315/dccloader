@@ -228,7 +228,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                         if ((progType & 1) && mem_has_spare[flashIndex - 1]) DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
                     } else {
                         uint32_t comp_len = DN_Packet_DCC_Read();
-                        DN_Packet_Read(compBuf, (comp_len + 3) & 0xfffffffc);
+                        DN_Packet_Read(compBuf, ALIGN4(comp_len));
                     }
                     uint32_t checksum = DN_Packet_DCC_Read();
                     // TODO: Writing

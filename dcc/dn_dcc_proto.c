@@ -148,7 +148,7 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
   SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);
 
-  return (outOffset + 3) & 0xfffffffc;
+  return ALIGN4(outOffset);
 }
 
 #if HAVE_MINILZO
@@ -172,7 +172,7 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest)
   SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);
 
-  return (outOffset + 3) & 0xfffffffc;
+  return ALIGN4(outOffset);
 }
 #endif
 
@@ -197,7 +197,7 @@ uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
   SIZE = outOffset - 4;
   memcpy(dest + 4, &SIZE, 4);
 
-  return (outOffset + 3) & 0xfffffffc;
+  return ALIGN4(outOffset);
 }
 #endif
 
@@ -210,7 +210,7 @@ uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest)
   memcpy(dest + 4, src, size);
   outOffset += size;
 
-  return (outOffset + 3) & 0xfffffffc;
+  return ALIGN4(outOffset);
 }
 
 /* 03 - DCC Packets */
