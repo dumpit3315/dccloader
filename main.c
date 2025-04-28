@@ -36,7 +36,7 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 ext_mem = DCC_MEM_EXTENDED(1, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
                 mem_has_spare[i] = 0;
             WRITE_EXTMEM:
-                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | ((ext_mem & 0xffff) << 16);
+                BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (ext_mem << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
                 BUF_INIT[dcc_init_offset++] = ext_mem;
                 break;
