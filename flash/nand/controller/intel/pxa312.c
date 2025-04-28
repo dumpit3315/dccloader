@@ -66,9 +66,9 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     PXA3_NAND_Reset();
     uint32_t nand_idcode = PXA3_NAND_ReadId();
 
-    uint8_t mfr_id = (uint8_t)(nand_idcode & 0xff);
-    uint8_t dev_id = (uint8_t)((nand_idcode >> 8) & 0xff);
-    uint8_t ext_id = (uint8_t)((nand_idcode >> 24) & 0xff);
+    uint8_t mfr_id = (uint8_t)nand_idcode;
+    uint8_t dev_id = (uint8_t)(nand_idcode >> 8);
+    uint8_t ext_id = (uint8_t)(nand_idcode >> 24);
 
     for (int i = 0; flash_ids[i].dev_id; i++) {
         if (dev_id == (uint8_t)flash_ids[i].dev_id) {
