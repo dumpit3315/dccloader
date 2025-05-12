@@ -308,6 +308,7 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   }
 
   DN_Packet_DCC_Send(checksum);
+
 #if USE_BREAKPOINTS
   cmdReadBuf = DN_Packet_DCC_WaitForBP();
 #endif
@@ -324,6 +325,7 @@ void DN_Packet_Send_One(uint32_t data) {
   DN_Packet_DCC_Send(data);
   
   DN_Packet_DCC_Send(checksum);
+  
 #if USE_BREAKPOINTS
   cmdReadBuf = DN_Packet_DCC_WaitForBP();
 #endif
