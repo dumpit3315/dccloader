@@ -86,6 +86,9 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
 
     mem->manufacturer = (uint8_t)CFI_READ(offset, 0x00);
     mem->device_id = CFI_READ(offset, 0x01);
+    uint16_t spansion_id2 = CFI_READ(offset, 0x0e);
+    uint16_t spansion_id3 = CFI_READ(offset, 0x0f);
+
     mem->bit_width = qry.bit_width;
     mem->size = qry.size;
     mem->page_size = 0x200;
@@ -126,6 +129,8 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
                 mem->size = 0x00100000;
                 break;
         }
+    } else if (mem->manufacturer == 0x01) { // Spansion
+        if (spansion_id2 == 0x2221 && mem->size == 0x01000000) mem->size = 0x800000;
     }
 
     return DCC_OK;
