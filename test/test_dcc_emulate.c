@@ -1,9 +1,8 @@
 #include <stdint.h>
-#include <stdio.h>
 
-extern void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3);
+extern void dcc_main(uint32_t StartAddress, uint32_t PageSize);
 
 int main(void) {
-    dcc_main(0x0, 0x0, 0x0);
+    dcc_main(0x0, 0x800);
     return 0;
 }

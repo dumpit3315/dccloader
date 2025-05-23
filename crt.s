@@ -57,9 +57,9 @@ _vectors:
    .extern __stack_und_end
 
 /* Variables */
-NorStartAddress1:  .word 0x12345678
-NorStartAddress2:  .word 0x12345678
-NorStartAddress3:  .word 0x12345678
+StartAddress:  .word 0x12345678
+unk1:          .word 0x12345678
+PageSize:      .word 0x12345678
 /* Loader via H/W BP polling */
 #if USE_BREAKPOINTS
 DCC_PKT_RW_SIZE:   .word 0xffffffff
@@ -192,16 +192,13 @@ bss_clear_loop:
 
    /* Jump to Main */
    mov   r0, #0
-   adr   r0, NorStartAddress1
+   adr   r0, StartAddress
    ldr   r0, [r0]
 
    mov   r1, #0
-   adr   r1, NorStartAddress2
+   adr   r1, PageSize
    ldr   r1, [r1]
 
-   mov   r2, #0
-   adr   r2, NorStartAddress3
-   ldr   r2, [r2]
 
    b dcc_main
 

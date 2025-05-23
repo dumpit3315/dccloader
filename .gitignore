@@ -12,3 +12,4 @@ compress_test.bat
 *.cmm
 *.bak
 build/*.has
+dcc_test_*

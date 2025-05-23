@@ -15,7 +15,7 @@ extern void *absolute_to_relative(void *ptr);
 #endif
 
 // dcc code
-void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress3) {
+void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     DCCMemory mem[16] = { 0 };
     uint8_t mem_has_spare[16] = { 0 };
     uint32_t BUF_INIT[512];
@@ -213,12 +213,12 @@ void dcc_main(uint32_t BaseAddress1, uint32_t BaseAddress2, uint32_t BaseAddress
                 break;
 
             case CMD_WRITE:
+                flashIndex = (cmd >> 16) & 0xff;
+
                 uint32_t pAddrStart = DN_Packet_DCC_Read();
                 uint32_t dataPackN = DN_Packet_DCC_Read();
                 uint8_t progType = (cmd >> 8) & 0x7f;
                 uint8_t useECC = (cmd >> 8) & 0x80;
-
-                flashIndex = (cmd >> 16) & 0xff;
 
                 if (flashIndex == 0) flashIndex = 1;
 
