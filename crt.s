@@ -290,6 +290,18 @@ DN_Packet_DCC_Send:
    bx lr
 #endif
 
+/* libc functions */
+.global strlen
+strlen:
+	mov	r2, r0
+strlen.loop:
+	ldrb	r1, [r0], #1
+	tst	r1, r1
+	bne	strlen.loop
+	sub	r0, r0, r2
+	sub	r0, r0, #1
+	bx lr
+
 /* End */
 .weak ExitFunction
 .weak UndefHandler, PAbortHandler, DAbortHandler

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #define MEMORY_BASE_OFFSET 0x0
-#define CFI_TYPE 4
+#define CFI_TYPE 2
 
 #if CFI_TYPE == 2 // S71WS256P
 #define CFI_MFR_ID 0x01

@@ -1,4 +1,4 @@
 #!/bin/bash
 clang -I . -DDCC_TESTING -DHAVE_MINILZO=1 -DHAVE_LZ4=1 -D_CRT_SECURE_NO_WARNINGS=1 test/test_rle_compress.c dcc/dn_dcc_proto.c minilzo/minilzo.c lz4/lz4_fs.c plat/default.c -o dcc_test_rle
 clang -I . -DDCC_TESTING -DHAVE_MINILZO=1 -DHAVE_LZ4=1 -D_CRT_SECURE_NO_WARNINGS=1 test/test_dcc_writing_reading.c dcc/dn_dcc_proto.c minilzo/minilzo.c lz4/lz4_fs.c plat/default.c -o dcc_test_wr
-clang -I . -DDCC_TESTING -DHAVE_MINILZO=1 -DHAVE_LZ4=1 -D_CRT_SECURE_NO_WARNINGS=1 test/test_dcc_emulate.c test/test_dcc_platform.c main.c dcc/dn_dcc_proto.c dcc/bitutils.c minilzo/minilzo.c lz4/lz4_fs.c plat/default.c flash/cfi/cfi.c flash/mmap/mmap.c -o dcc_test_emu
+clang -I . -DDCC_TESTING -DHAVE_MINILZO=1 -DHAVE_LZ4=1 -D_CRT_SECURE_NO_WARNINGS=1 test/test_dcc_emulate.c test/test_dcc_platform.c main.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c minilzo/minilzo.c lz4/lz4_fs.c plat/default.c flash/cfi/cfi.c flash/mmap/mmap.c -o dcc_test_emu

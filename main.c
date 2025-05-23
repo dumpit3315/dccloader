@@ -1,5 +1,5 @@
 #include "dcc/dn_dcc_proto.h"
-#include "flash/cfi/cfi.h"
+#include "dcc/plat.h"
 #include "devices.h"
 
 typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
@@ -13,6 +13,8 @@ void *absolute_to_relative(void* ptr) { return ptr; };
 #else
 extern void *absolute_to_relative(void *ptr);
 #endif
+
+size_t strlen(const char *str);
 
 // dcc code
 void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
@@ -36,12 +38,33 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 ext_mem = DCC_MEM_EXTENDED(1, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
                 mem_has_spare[i] = 0;
             WRITE_EXTMEM:
+                if (strlen(mem[i].name)) ext_mem |= 0x80;
+
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (ext_mem << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
+                
+                if (strlen(mem[i].name)) {
+                    int sLen = strlen(mem[i].name);
+                    uint8_t *bufCast = (uint8_t *)BUF_INIT;
+                    // int sPos = 0;
+                    // uint8_t *sData = (uint8_t *)(BUF_INIT + dcc_init_offset);
+                    // BUF_INIT[dcc_init_offset++] = sLen;
+
+                    // for (int j = 0; j < sLen; j++) {
+                    //     BUF_INIT[dcc_init_offset++] = mem[i].name[j];
+                    // }
+                    
+                    BUF_INIT[dcc_init_offset] = sLen;
+                    INT_MEMCPY((bufCast + (dcc_init_offset << 2) + 1), mem[i].name, sLen);
+
+                    dcc_init_offset += ALIGN4(1 + sLen) >> 2;
+                }
+
                 BUF_INIT[dcc_init_offset++] = ext_mem;
                 break;
 
             case MEMTYPE_NAND:
+                if (strlen(mem[i].name)) goto NAND_EXTMEM;
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (mem[i].page_size << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
                 mem_has_spare[i] = 1;
@@ -50,6 +73,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
             case MEMTYPE_ONENAND:
             case MEMTYPE_AND:
             case MEMTYPE_AG_AND:
+            NAND_EXTMEM:
                 ext_mem = DCC_MEM_EXTENDED(0, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
                 mem_has_spare[i] = 1;
                 goto WRITE_EXTMEM;

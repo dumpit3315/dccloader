@@ -27,6 +27,7 @@ typedef struct {
     uint32_t nor_cmd_set;
     uint32_t base_offset;
     MemTypes type;
+    char name[255];
 } DCCMemory;
 
 typedef struct {
@@ -102,14 +103,14 @@ typedef struct {
 #define DCC_ERASE_ERROR    0x24 // Erase error
 #define DCC_PROGRAM_ERROR  0x25 // Write error
 #define DCC_PROBE_ERROR    0x26 // Device probe failed
-#define DCC_ASSERT_ERROR   0x27 // Ready flag timeout
+#define DCC_R_ASSERT_ERROR 0x27 // Ready flag timeout during read
 #define DCC_READ_ERROR     0x28 // Read error
 #define DCC_W_ASSERT_ERROR 0x2A // Ready flag timeout during write
 #define DCC_E_ASSERT_ERROR 0x2B // Ready flag timeout during erase
 #define DCC_ROFS_ERROR     0x2D // Cannot write to read-only memory
 #define DCC_E_UNK_ERROR    0x2E // Unknown erase error, Please file a bug report
 #define DCC_WUPROT_TIMEOUT 0x2F // Write unprotect timeout
-#define DCC_WUPROT_ERROR   0x30 // Write unprotect failed
+#define DCC_WUPROT_ERROR   0x30 // Write unprotect failed, Attempted to write unprotect the block but still write protected afterwards.
 #define DCC_W_UNK_ERROR    0x31 // Unknown write error, Please file a bug report
 #define DCC_UNK_ERROR      0x32 // Unknown error, may happen if the flash is not completely initialized.
 #define DCC_FLASH_NOENT    0x37 // Flash with this ID is not probed/not found
@@ -132,6 +133,12 @@ void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
 void DN_Packet_Read(uint8_t *dest, uint32_t size);
 uint32_t DN_Log2(uint32_t value);
+#if USE_DCC_WBUF
+void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size);
+void DN_Packet_WriteDirect(uint8_t *src, uint32_t size);
+#endif
+void DN_Packet_DCC_ReadDirectCompressed(uint8_t *dest, uint32_t size);
+void DN_Packet_DCC_ReadDirect(uint8_t *dest, uint32_t size);
 
 // Watchdog
 extern void wdog_reset(void);

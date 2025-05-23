@@ -99,6 +99,7 @@ def test_arm():
         mu.ctl_set_exits([0])
 
         mu.mem_map(0x00000000, 32 * 1024 * 1024)
+        mu.mem_map(0x12000000, 32 * 1024 * 1024)
         mu.mem_map(0x03000000, 2 * 1024 * 1024)
 
         # map 2MB memory for this emulation
@@ -131,14 +132,17 @@ def test_arm():
         def on_write(mu, access, address, size, value, data):
             if DEBUG:
                 if address <= 0x14000000:
-                    if address == 0xaaa and value == 0x98:
+                    if (address & 0x1ffff) == 0xaaa and value == 0x98:
                         mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read())
+                        mu.mem_write(0x12000000, open("cfi_32mb.bin", "rb").read())
                         
-                    elif address == 0xaaa and value == 0x90:
+                    elif (address & 0x1ffff) == 0xaaa and value == 0x90:
                         mu.mem_write(0x00000000, b"\x01\x00\x7e\x22")
+                        mu.mem_write(0x12000000, b"\x01\x00\x7e\x22")
                         
-                    elif address == 0x0 and value == 0xf0:
+                    elif (address & 0x1ffff) == 0x0 and value == 0xf0:
                         mu.mem_write(0x00000000, open("build/dumpnow.bin", "rb").read())
+                        mu.mem_write(0x12000000, open("build/dumpnow.bin", "rb").read())
                 # mu.reg_write(0x)
                 print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
@@ -211,9 +215,11 @@ if __name__ == '__main__':
         print("H:", hex(_dcc_read_host()))
         
     print("RUN")
-    _dcc_write_host(0x152 | 0x00000000)
-    _dcc_write_host(0x00120000)
-    _dcc_write_host(0x00000080)
+
+    if False:
+        _dcc_write_host(0x152 | 0x00000000)
+        _dcc_write_host(0x00120000)
+        _dcc_write_host(0x00000080)
     
     while True:
         while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)

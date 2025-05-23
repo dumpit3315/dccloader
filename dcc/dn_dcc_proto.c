@@ -1,4 +1,5 @@
 #include "dn_dcc_proto.h"
+#include <stdint.h>
 #if HAVE_MINILZO
 #include "../minilzo/minilzo.h"
 #endif
@@ -89,8 +90,6 @@ uint32_t DN_RLE_Matching(uint8_t *src, uint32_t size) {
   uint32_t offset = 0;
   uint32_t count = 1;
 
-  if (size < 2) return count;
-
   while ((offset < (size - 1)) && (count < 0x7fff) && (src[offset] == src[offset + 1])) {
     wdog_reset();
     count++;
@@ -140,7 +139,6 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
       dest[outOffset + 2] = src[inOffset];
       
       inOffset += RLE_Count & 0x7fff;
-
       outOffset += 3;
     }
   }
@@ -340,7 +338,205 @@ void DN_Packet_Read(uint8_t *dest, uint32_t size) {
   }
 }
 
-/* 04 - Utilities */
+/* 04 - DCC Buffer */
+#if USE_DCC_WBUF
+static uint32_t temp_buf;
+static uint8_t temp_buf_offset;
+static uint32_t checksum;
+
+void DN_Packet_DCC_Send_Buffer_Flush(void) {
+  if (!temp_buf_offset) return;
+  checksum = DN_Calculate_CRC32(checksum, (uint8_t *)(&temp_buf), 4);
+  DN_Packet_DCC_Send(temp_buf);
+
+  temp_buf = 0;
+  temp_buf_offset = 0;
+}
+
+void DN_Packet_DCC_Send_Buffer_Reset(void) {
+  temp_buf = 0;
+  temp_buf_offset = 0;
+  checksum = 0xffffffff;
+}
+
+static inline void DN_Packet_DCC_Send_Buffer8(uint8_t data) {
+  temp_buf |= data << (temp_buf_offset << 3);
+  temp_buf_offset++;
+  
+  if (temp_buf_offset == 4) DN_Packet_DCC_Send_Buffer_Flush();
+}
+
+static inline void DN_Packet_DCC_Send_Buffer8_Multi(uint8_t *data, uint32_t size) {
+  for (uint32_t i = 0; i < size; i++) {
+    DN_Packet_DCC_Send_Buffer8(data[i]);
+  }
+}
+
+static inline void DN_Packet_DCC_Send_Buffer16(uint16_t data) {
+  DN_Packet_DCC_Send_Buffer8(data & 0xff);
+  DN_Packet_DCC_Send_Buffer8(data >> 8);
+}
+
+static inline void DN_Packet_DCC_Send_Buffer32(uint32_t data) {
+  DN_Packet_DCC_Send_Buffer16(data & 0xffff);
+  DN_Packet_DCC_Send_Buffer16(data >> 16);
+}
+
+void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
+  uint32_t MAGIC = CMD_WRITE_COMP_RLE;
+  uint32_t SIZE;
+  uint32_t inOffset = 0;
+  uint32_t outOffset = 8;
+  uint16_t RLE_Count;
+  uint16_t RAW_Count;
+  uint32_t rawInOffset;
+
+  DN_Packet_DCC_Send_Buffer_Reset();
+
+  /* 01 - Compute output size */
+  while (inOffset < size) {
+    wdog_reset();
+    RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset); 
+    
+    if (RLE_Count == 1) {
+      RAW_Count = 0;
+
+      while (RLE_Count == 1 && inOffset < size) {
+        wdog_reset();
+        RAW_Count++;
+        inOffset++;
+
+        if (RAW_Count >= 0x7fff) break;
+        RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset);
+      }
+
+      outOffset += 2 + RAW_Count;
+    }
+
+    if (RLE_Count > 1) {      
+      inOffset += RLE_Count;
+      outOffset += 3;
+    }
+  }
+
+  SIZE = outOffset - 4;
+  DN_Packet_DCC_Send(outOffset >> 2);
+  DN_Packet_DCC_Send_Buffer32(MAGIC);
+  DN_Packet_DCC_Send_Buffer32(SIZE);
+  
+  /* 02 - Actually compress */
+  inOffset = 0;
+
+  while (inOffset < size) {
+    wdog_reset();
+    RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset); 
+    
+    if (RLE_Count == 1) {
+      RAW_Count = 0;
+      rawInOffset = inOffset;
+
+      while (RLE_Count == 1 && inOffset < size) {
+        wdog_reset();
+        RAW_Count++;
+        inOffset++;
+
+        if (RAW_Count >= 0x7fff) break;
+        RLE_Count = DN_RLE_Matching(src + inOffset, size - inOffset);
+      }
+
+      DN_Packet_DCC_Send_Buffer16(RAW_Count);
+      DN_Packet_DCC_Send_Buffer8_Multi(src + rawInOffset, RAW_Count);
+    }
+
+    if (RLE_Count > 1) {
+      DN_Packet_DCC_Send_Buffer16(RLE_Count | 0x8000);
+      DN_Packet_DCC_Send_Buffer8(src[inOffset]);
+      
+      inOffset += RLE_Count;
+    }
+  }
+
+  DN_Packet_DCC_Send_Buffer_Flush();
+  DN_Packet_DCC_Send(checksum);
+}
+
+void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
+  uint32_t MAGIC = CMD_WRITE_COMP_NONE;
+
+  DN_Packet_DCC_Send_Buffer_Reset();
+
+  DN_Packet_DCC_Send((size + 4) >> 2);
+  DN_Packet_DCC_Send_Buffer32(MAGIC);
+  
+  DN_Packet_DCC_Send_Buffer8_Multi(src, size);
+
+  DN_Packet_DCC_Send_Buffer_Flush();
+  DN_Packet_DCC_Send(checksum);
+}
+#endif
+static uint32_t temp_read_buf;
+static uint8_t temp_read_buf_offset;
+
+void DN_Packet_DCC_Read_Buffer_Reset(void) {
+  temp_read_buf = 0;
+  temp_read_buf_offset = 0;
+}
+
+static inline uint8_t DN_Packet_DCC_Read_Buffer8(void) {
+  if (!temp_read_buf_offset) temp_read_buf = DN_Packet_DCC_Read();
+  uint8_t temp = temp_read_buf & 0xff;
+
+  temp_read_buf >>= 8;
+  temp_read_buf_offset = (temp_read_buf_offset + 1) & 3;
+  return temp;
+}
+
+static inline uint16_t DN_Packet_DCC_Read_Buffer16(void) {
+  return DN_Packet_DCC_Read_Buffer8() | DN_Packet_DCC_Read_Buffer8() << 8;
+}
+
+static inline uint32_t DN_Packet_DCC_Read_Buffer32(void) {
+  return DN_Packet_DCC_Read_Buffer16() | DN_Packet_DCC_Read_Buffer16() << 16;
+}
+
+void DN_Packet_DCC_ReadDirectCompressed(uint8_t *dest, uint32_t size) {
+  uint32_t inOffset = 0;
+  uint32_t outOffset = 0;
+
+  DN_Packet_DCC_Read_Buffer_Reset();
+
+  while (inOffset < size) {
+    uint16_t flag = DN_Packet_DCC_Read_Buffer16();
+    uint16_t count = flag & 0x7fff;
+
+    if (flag & 0x8000) {
+      inOffset += 3;
+      uint8_t data = DN_Packet_DCC_Read_Buffer8();
+
+      do {
+        dest[outOffset++] = data;
+      } while (count--);
+    } else {
+      inOffset += 2 + count;
+
+      do {
+        dest[outOffset++] = DN_Packet_DCC_Read_Buffer8();
+      } while (count--);
+    }
+  }
+}
+
+void DN_Packet_DCC_ReadDirect(uint8_t *dest, uint32_t size) {
+  uint32_t inOffset = 0;
+  uint32_t outOffset = 0;
+  
+  while (inOffset < size) {
+    dest[outOffset++] = DN_Packet_DCC_Read();
+    inOffset += 4;
+  }
+}
+
+/* 05 - Utilities */
 uint32_t DN_Log2(uint32_t value)
 {
   uint32_t m = 0;

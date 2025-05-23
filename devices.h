@@ -8,6 +8,7 @@
 
 static Device devices[] = {
     {&nor_cfi_controller, 0x0},
+    {&nor_cfi_controller, 0x12000000},
     // {&nand_controller, 0x0},
     {0x0, 0x0}
 };
