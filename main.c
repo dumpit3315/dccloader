@@ -93,7 +93,9 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     
     DN_Packet_Send((uint8_t *)BUF_INIT, dcc_init_offset << 2);
 
+    #if HAVE_LZ4 || HAVE_MINILZO
     uint32_t dcc_comp_packet_size;
+    #endif
     uint32_t flashIndex;
     uint32_t srcOffset;
     uint32_t srcSize;

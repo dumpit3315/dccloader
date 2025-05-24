@@ -69,8 +69,8 @@ DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
 #endif
 #if HAVE_LWMEM
 lwmem_init:
-   .word 0x00020000
-   .word 0x00060000
+   .word __heap_start
+   .word 0x00040000
 lwmem_init_end:
    .word 0x00000000
    .word 0x00000000
