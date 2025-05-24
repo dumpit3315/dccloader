@@ -5694,14 +5694,14 @@ void DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size) {
         #if HAVE_MINILZO
         case CMD_READ_COMP_LZO:
             comp_size = DN_Packet_Compress2(MAB_BUF, size, COMP_BUF);
-			DN_Packet_WriteDirect(COMP_BUF, comp_size);
+			DN_Packet_Send(COMP_BUF, comp_size);
 			break;
         #endif
 
         #if HAVE_LZ4
         case CMD_READ_COMP_LZ4:
             DN_Packet_Compress3(MAB_BUF, size, COMP_BUF);
-			DN_Packet_WriteDirect(COMP_BUF, comp_size);
+			DN_Packet_Send(COMP_BUF, comp_size);
 			break;
         #endif
 
