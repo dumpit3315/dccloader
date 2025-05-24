@@ -251,18 +251,31 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 uint32_t dataPackN = DN_Packet_DCC_Read();
                 uint8_t progType = (cmd >> 8) & 0x7f;
                 uint8_t useECC = (cmd >> 8) & 0x80;
+                uint32_t checksum_comp = 0xffffffff;
 
                 if (flashIndex == 0) flashIndex = 1;
 
                 if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
                     if (dataPackN == CMD_WRITE_COMP_NONE) {
-                        if (progType & 2) DN_Packet_Read(rawBuf, mem[flashIndex - 1].block_size);
-                        if ((progType & 1) && mem_has_spare[flashIndex - 1]) DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                        if (progType & 2) {
+                            DN_Packet_Read(rawBuf, mem[flashIndex - 1].block_size);
+                            checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf, mem[flashIndex - 1].block_size);
+                        }
+                        if ((progType & 1) && mem_has_spare[flashIndex - 1]) {
+                            DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                            checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                        }
                     } else {
                         uint32_t comp_len = DN_Packet_DCC_Read();
-                        DN_Packet_DCC_ReadCompressed(rawBuf, ALIGN4(comp_len));
+                        DN_Packet_DCC_ReadCompressed(rawBuf, comp_len);
+                        checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf, comp_len);
                     }
                     uint32_t checksum = DN_Packet_DCC_Read();
+
+                    if (checksum != checksum_comp) {
+                        DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_CHECKSUM_ERROR, flashIndex));
+                        continue;
+                    }
                     // TODO: Writing
                     DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(DCC_WPROT_ERROR, flashIndex));
                 } else {
