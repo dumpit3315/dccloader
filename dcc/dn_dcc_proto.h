@@ -1,7 +1,6 @@
 #pragma once
 #include "plat.h"
 
-#define DCC_BUFFER_SIZE 0x40000
 #define ALIGN2(x) ((x + 1) & ~1)
 #define ALIGN4(x) ((x + 3) & ~3)
 
@@ -133,12 +132,9 @@ void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
 void DN_Packet_Read(uint8_t *dest, uint32_t size);
 uint32_t DN_Log2(uint32_t value);
-#if USE_DCC_WBUF
 void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size);
 void DN_Packet_WriteDirect(uint8_t *src, uint32_t size);
-#endif
-void DN_Packet_DCC_ReadDirectCompressed(uint8_t *dest, uint32_t size);
-void DN_Packet_DCC_ReadDirect(uint8_t *dest, uint32_t size);
+void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size);
 
 // Watchdog
 extern void wdog_reset(void);

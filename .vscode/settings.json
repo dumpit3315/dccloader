@@ -66,6 +66,7 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "clangd.fallbackFlags": [
     "-I${workspaceRoot}",
-    "-DDCC_TESTING=1"
+    "-DDCC_TESTING=1",
+    "-DDCC_BUFFER_SIZE=0x40000"
   ]
 }

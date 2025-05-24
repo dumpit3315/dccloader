@@ -199,13 +199,7 @@ def _dcc_write_host(data):
 def _dcc_read_status_host():
     return status_reg
 
-if __name__ == '__main__':
-    import threading
-    import time
-    
-    t = threading.Thread(target=test_arm, daemon=True)
-    t.start()
-    
+def _dcc_loader_read():
     while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
     iCount = _dcc_read_host()
     print("C:", hex(iCount))
@@ -213,17 +207,31 @@ if __name__ == '__main__':
     for _ in range(iCount + 1):
         while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
         print("H:", hex(_dcc_read_host()))
-        
+
+if __name__ == '__main__':
+    import threading
+    import time
+    
+    t = threading.Thread(target=test_arm, daemon=True)
+    t.start()
+    
+    _dcc_loader_read()
     print("RUN")
 
-    if False:
+    if True:
         _dcc_write_host(0x152 | 0x00000000)
         _dcc_write_host(0x00120000)
         _dcc_write_host(0x00000080)
+
+        _dcc_loader_read()
     
-    while True:
-        while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
-        print("H:", hex(_dcc_read_host()))
-    
-    while True:
-        time.sleep(2)
+    if True:
+        _dcc_write_host(0x252 | 0x00000000)
+        _dcc_write_host(0x00120000)
+        _dcc_write_host(0x00000080)
+
+        _dcc_loader_read()
+
+    time.sleep(4)
+
+    print("end testing")

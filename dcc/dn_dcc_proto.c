@@ -339,7 +339,6 @@ void DN_Packet_Read(uint8_t *dest, uint32_t size) {
 }
 
 /* 04 - DCC Buffer */
-#if USE_DCC_WBUF
 static uint32_t temp_buf;
 static uint8_t temp_buf_offset;
 static uint32_t checksum;
@@ -473,7 +472,7 @@ void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
   DN_Packet_DCC_Send_Buffer_Flush();
   DN_Packet_DCC_Send(checksum);
 }
-#endif
+
 static uint32_t temp_read_buf;
 static uint8_t temp_read_buf_offset;
 
@@ -499,7 +498,7 @@ static inline uint32_t DN_Packet_DCC_Read_Buffer32(void) {
   return DN_Packet_DCC_Read_Buffer16() | DN_Packet_DCC_Read_Buffer16() << 16;
 }
 
-void DN_Packet_DCC_ReadDirectCompressed(uint8_t *dest, uint32_t size) {
+void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size) {
   uint32_t inOffset = 0;
   uint32_t outOffset = 0;
 
@@ -523,16 +522,6 @@ void DN_Packet_DCC_ReadDirectCompressed(uint8_t *dest, uint32_t size) {
         dest[outOffset++] = DN_Packet_DCC_Read_Buffer8();
       } while (count--);
     }
-  }
-}
-
-void DN_Packet_DCC_ReadDirect(uint8_t *dest, uint32_t size) {
-  uint32_t inOffset = 0;
-  uint32_t outOffset = 0;
-  
-  while (inOffset < size) {
-    dest[outOffset++] = DN_Packet_DCC_Read();
-    inOffset += 4;
   }
 }
 

@@ -5,10 +5,12 @@
 typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
 typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
 
-static uint8_t compBuf[DCC_BUFFER_SIZE + 0x2000];
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
+#if HAVE_LZ4 || HAVE_MINILZO
+static uint8_t compBuf[DCC_BUFFER_SIZE + 0x4000];
+#endif
 #ifdef DCC_TESTING
-extern uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest);
+extern void DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size);
 void *absolute_to_relative(void* ptr) { return ptr; };
 #else
 extern void *absolute_to_relative(void *ptr);
@@ -140,22 +142,24 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
 #ifndef DCC_TESTING
                     switch (algo) {
                         case CMD_READ_COMP_NONE:
-                            dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_WriteDirect((uint8_t *)srcOffset, srcSize);
                             break;
 
                         case CMD_READ_COMP_RLE:
-                            dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_WriteDirectCompressed((uint8_t *)srcOffset, srcSize);
                             break;
 
                         #if HAVE_MINILZO
                         case CMD_READ_COMP_LZO:
                             dcc_comp_packet_size = DN_Packet_Compress2((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
                             break;
                         #endif
 
                         #if HAVE_LZ4
                         case CMD_READ_COMP_LZ4:
                             dcc_comp_packet_size = DN_Packet_Compress3((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
                             break;
                         #endif
 
@@ -164,10 +168,10 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             continue;
                     }
 #else
-                    dcc_comp_packet_size = DCC_COMPRESS_MEMCPY(algo, srcOffset, srcSize, compBuf);
+                    DCC_COMPRESS_MEMCPY(algo, srcOffset, srcSize);
 #endif
                     
-                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                    // DN_Packet_Send(compBuf, dcc_comp_packet_size);
                 } else if (flashIndex < 0x11 && mem[flashIndex - 1].type != MEMTYPE_NONE) {
                     switch (mem[flashIndex - 1].type) {
                         case MEMTYPE_NAND:
@@ -184,22 +188,26 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             
                             switch (algo) {
                                 case CMD_READ_COMP_NONE:
-                                    dcc_comp_packet_size = DN_Packet_CompressNone(rawBuf, destSize, compBuf);
+                                    DN_Packet_WriteDirect(rawBuf, destSize);
+                                    //dcc_comp_packet_size = DN_Packet_CompressNone(rawBuf, destSize, compBuf);
                                     break;
 
                                 case CMD_READ_COMP_RLE:
-                                    dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
+                                    DN_Packet_WriteDirectCompressed(rawBuf, destSize);
+                                    //dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
                                     break;
 
                                 #if HAVE_MINILZO
                                 case CMD_READ_COMP_LZO:
                                     dcc_comp_packet_size = DN_Packet_Compress2(rawBuf, destSize, compBuf);
+                                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
                                     break;
                                 #endif
 
                                 #if HAVE_LZ4
                                 case CMD_READ_COMP_LZ4:
                                     dcc_comp_packet_size = DN_Packet_Compress3(rawBuf, destSize, compBuf);
+                                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
                                     break;
                                 #endif
 
@@ -208,7 +216,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                                     continue;
                             }
 
-                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                            // DN_Packet_Send(compBuf, dcc_comp_packet_size);
                             break;
                         case MEMTYPE_NOR:
                         default:
@@ -252,7 +260,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                         if ((progType & 1) && mem_has_spare[flashIndex - 1]) DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
                     } else {
                         uint32_t comp_len = DN_Packet_DCC_Read();
-                        DN_Packet_Read(compBuf, ALIGN4(comp_len));
+                        DN_Packet_DCC_ReadCompressed(rawBuf, ALIGN4(comp_len));
                     }
                     uint32_t checksum = DN_Packet_DCC_Read();
                     // TODO: Writing

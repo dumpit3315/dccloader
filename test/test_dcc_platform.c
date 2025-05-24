@@ -5673,8 +5673,10 @@ void *PLAT_MEMCPY(void *dest, const void *src, size_t n) {
     return dest;
 }
 
-uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, uint8_t *dest) {
+void DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size) {
     uint8_t *MAB_BUF = malloc(size);
+	uint8_t *COMP_BUF = malloc(size + 0x1000);
+	uint32_t comp_size;
 
     for (int i = 0; i < size; i++) {
         MAB_BUF[i] = READ_U8(src_offset + i);
@@ -5682,19 +5684,25 @@ uint32_t DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size, 
     
     switch (algo) {
         case CMD_READ_COMP_NONE:
-            return DN_Packet_CompressNone(MAB_BUF, size, dest);
+            DN_Packet_WriteDirect(MAB_BUF, size);
+			break;
 
         case CMD_READ_COMP_RLE:
-            return DN_Packet_Compress(MAB_BUF, size, dest);
+            DN_Packet_WriteDirectCompressed(MAB_BUF, size);
+			break;
 
         #if HAVE_MINILZO
         case CMD_READ_COMP_LZO:
-            return DN_Packet_Compress2(MAB_BUF, size, dest);
+            comp_size = DN_Packet_Compress2(MAB_BUF, size, COMP_BUF);
+			DN_Packet_WriteDirect(COMP_BUF, comp_size);
+			break;
         #endif
 
         #if HAVE_LZ4
         case CMD_READ_COMP_LZ4:
-            return DN_Packet_Compress3(MAB_BUF, size, dest);
+            DN_Packet_Compress3(MAB_BUF, size, COMP_BUF);
+			DN_Packet_WriteDirect(COMP_BUF, comp_size);
+			break;
         #endif
 
         default:

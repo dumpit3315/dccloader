@@ -117,6 +117,12 @@ DADEFS += -DUSE_BREAKPOINTS=0
 DDEFS += -DUSE_BREAKPOINTS=0
 endif
 
+ifdef BUFFER_SIZE
+DDEFS += -DDCC_BUFFER_SIZE=${BUFFER_SIZE}
+else
+DDEFS += -DDCC_BUFFER_SIZE=0x40000
+endif
+
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
@@ -204,6 +210,7 @@ help:
 	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
 	@echo 	USE_ICACHE=1 = Use instruction cache (ARM9 and later)
 	@echo 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help
+	@echo	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000)
 
 #
 # Include the dependency files, should be the last of the makefile
