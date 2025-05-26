@@ -267,11 +267,6 @@ uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	do {
     wdog_reset();
 		DCC_GET_STATUS(dcc_reg);
-		/* operation controlled by master, cancel operation
-			 upon reception of data for immediate response */
-#ifdef CANCEL_WRITE_ON_DCC_READ_BIT
-		if (dcc_reg & DCC_RBIT) return 0; // Cancel if the debugger sends any data to the DCC buffer.
-#endif
 	} while (dcc_reg & DCC_WBIT); // Wait until the debugger reads the WB data, which sets the W bit to low.
 
 	DCC_WRITE(data); // Then, the host writes the data to the WB bit, setting the W bit to high.
