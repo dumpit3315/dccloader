@@ -153,7 +153,7 @@ OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
 
-ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+ASFLAGS = $(MCFLAGS) -fPIC -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
 CPFLAGS = $(MCFLAGS) -fPIC -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
 LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
