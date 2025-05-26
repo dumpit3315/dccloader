@@ -123,6 +123,12 @@ else
 DDEFS += -DDCC_BUFFER_SIZE=0x40000
 endif
 
+ifeq ($(OLD_IO), 1)
+DDEFS += -DUSE_OLD_DCC_IO=1
+else
+DDEFS += -DUSE_OLD_DCC_IO=0
+endif
+
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
@@ -220,6 +226,7 @@ endif
 	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
 	$(info 	PROJECT=(name) = Output name)
 	$(info 	LDSCRIPT=(ld) = Linker script)
+	$(info 	OLD_IO=1 = Use old DCC IO routines)
 	$(info 	Flash devices:)
 	$(info 	CFI=1 = Enable CFI interface)
 	$(info 	NAND_CONTROLLER=(name) = Enable NAND controller)

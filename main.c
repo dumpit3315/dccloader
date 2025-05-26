@@ -10,7 +10,7 @@ const char *CFLAGS = "C:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " C
 #endif
 
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
-#if HAVE_LZ4 || HAVE_MINILZO
+#if HAVE_LZ4 || HAVE_MINILZO || USE_OLD_DCC_IO
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x4000];
 #endif
 #ifdef DCC_TESTING
@@ -107,7 +107,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     
     DN_Packet_Send((uint8_t *)BUF_INIT, dcc_init_offset << 2);
 
-    #if HAVE_LZ4 || HAVE_MINILZO
+    #if HAVE_LZ4 || HAVE_MINILZO || USE_OLD_DCC_IO
     uint32_t dcc_comp_packet_size;
     #endif
     uint32_t flashIndex;
@@ -163,13 +163,27 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 Jump_Read_NOR:
 #ifndef DCC_TESTING
                     switch (algo) {
+                        #if USE_OLD_DCC_IO
+                        case CMD_READ_COMP_RLE:
+                        #if !USE_BREAKPOINTS
+                            dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                            break;
+                        #endif
+                        case CMD_READ_COMP_NONE:
+                            dcc_comp_packet_size = DN_Packet_CompressNone((uint8_t *)srcOffset, srcSize, compBuf);
+                            DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                            break;
+                        #else
+                        case CMD_READ_COMP_RLE:
+                        #if !USE_BREAKPOINTS
+                            DN_Packet_WriteDirectCompressed((uint8_t *)srcOffset, srcSize);
+                            break;
+                        #endif
                         case CMD_READ_COMP_NONE:
                             DN_Packet_WriteDirect((uint8_t *)srcOffset, srcSize);
                             break;
-
-                        case CMD_READ_COMP_RLE:
-                            DN_Packet_WriteDirectCompressed((uint8_t *)srcOffset, srcSize);
-                            break;
+                        #endif
 
                         #if HAVE_MINILZO
                         case CMD_READ_COMP_LZO:
@@ -211,15 +225,29 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             
                             /* Compression */
                             switch (algo) {
+                                #if USE_OLD_DCC_IO
+                                case CMD_READ_COMP_RLE:
+                                #if !USE_BREAKPOINTS
+                                    dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
+                                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                                    break;
+                                #endif
+                                case CMD_READ_COMP_NONE:
+                                    dcc_comp_packet_size = DN_Packet_CompressNone(rawBuf, destSize, compBuf);
+                                    DN_Packet_Send(compBuf, dcc_comp_packet_size);
+                                    break;
+                                #else
+                                case CMD_READ_COMP_RLE:
+                                #if !USE_BREAKPOINTS
+                                    DN_Packet_WriteDirectCompressed(rawBuf, destSize);
+                                    //dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
+                                    break;
+                                #endif
                                 case CMD_READ_COMP_NONE:
                                     DN_Packet_WriteDirect(rawBuf, destSize);
                                     //dcc_comp_packet_size = DN_Packet_CompressNone(rawBuf, destSize, compBuf);
                                     break;
-
-                                case CMD_READ_COMP_RLE:
-                                    DN_Packet_WriteDirectCompressed(rawBuf, destSize);
-                                    //dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
-                                    break;
+                                #endif
 
                                 #if HAVE_MINILZO
                                 case CMD_READ_COMP_LZO:
