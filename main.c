@@ -5,6 +5,10 @@
 typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
 typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
 
+#ifdef CDEFS
+const char *CFLAGS = "C:DumpNow DCC Loader. (c) 2025 Wrapper. Compile flags: " CDEFS;
+#endif
+
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
 #if HAVE_LZ4 || HAVE_MINILZO
 static uint8_t compBuf[DCC_BUFFER_SIZE + 0x4000];
@@ -22,56 +26,64 @@ size_t strlen(const char *str);
 void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     DCCMemory mem[16] = { 0 };
     uint8_t mem_has_spare[16] = { 0 };
-    uint32_t BUF_INIT[512];
+    uint32_t BUF_INIT[2048];
     uint32_t dcc_init_offset = 0;
     uint32_t ext_mem;
     Driver *devBase;
     DCC_RETURN res;
 
+    /* 01 - Probe flash devices */
     for (int i = 0; i < 16; i++) {
-        if (!devices[i].driver) break;
+        if (!devices[i].driver) break; // Break when reaching the end of list
+
+        /* Probe device */
         devBase = (Driver *)absolute_to_relative(devices[i].driver);
         res = ((DCC_INIT_PTR *)absolute_to_relative(devBase->initialize))(&mem[i], devices[i].base_offset);
         if (res != DCC_OK) mem[i].type = MEMTYPE_NONE;
 
+        /* Print appropriate value */
         switch (mem[i].type) {
+            /* Anything without spare */
             case MEMTYPE_NOR:
             case MEMTYPE_SUPERAND:
                 ext_mem = DCC_MEM_EXTENDED(1, mem[i].page_size, mem[i].block_size, mem[i].size >> 20);
                 mem_has_spare[i] = 0;
+            /* Extended memory logic */
             WRITE_EXTMEM:
+                /* Set name flag if memory name is defined */
                 if (strlen(mem[i].name)) ext_mem |= 0x80;
 
+                /* First device info */
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (ext_mem << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
                 
+                /* Print additional information */
                 if (strlen(mem[i].name)) {
                     int sLen = strlen(mem[i].name);
                     uint8_t *bufCast = (uint8_t *)BUF_INIT;
-                    // int sPos = 0;
-                    // uint8_t *sData = (uint8_t *)(BUF_INIT + dcc_init_offset);
-                    // BUF_INIT[dcc_init_offset++] = sLen;
-
-                    // for (int j = 0; j < sLen; j++) {
-                    //     BUF_INIT[dcc_init_offset++] = mem[i].name[j];
-                    // }
                     
+                    /* 8-bit length then name (WORD aligned) */
                     BUF_INIT[dcc_init_offset] = sLen;
                     INT_MEMCPY((bufCast + (dcc_init_offset << 2) + 1), mem[i].name, sLen);
 
                     dcc_init_offset += ALIGN4(1 + sLen) >> 2;
                 }
 
+                /* Second device info */
                 BUF_INIT[dcc_init_offset++] = ext_mem;
                 break;
 
+            /* Regular NAND */
             case MEMTYPE_NAND:
-                if (strlen(mem[i].name)) goto NAND_EXTMEM;
+                if (strlen(mem[i].name)) goto NAND_EXTMEM; // Extended device info if we have additional information
+
+                /* Device info */
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (mem[i].page_size << 16);
                 BUF_INIT[dcc_init_offset++] = mem[i].manufacturer | (mem[i].device_id << 16);
                 mem_has_spare[i] = 1;
                 break;
 
+            /* Anything with spare */
             case MEMTYPE_ONENAND:
             case MEMTYPE_AND:
             case MEMTYPE_AG_AND:
@@ -80,6 +92,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 mem_has_spare[i] = 1;
                 goto WRITE_EXTMEM;
 
+            /* When device probe fails, it goes here */
             default:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
                 BUF_INIT[dcc_init_offset++] = 0;
@@ -88,6 +101,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
         }
     }
 
+    /* 02 - Print buffer size */
     BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_BUFFER(0) << 16);
     BUF_INIT[dcc_init_offset++] = DCC_BUFFER_SIZE;
     
@@ -101,11 +115,13 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     uint32_t srcSize;
     uint32_t destSize;
 
+    /* 03 - The loop */
     while (1) {
         wdog_reset();
         uint32_t cmd = DN_Packet_DCC_Read();
 
         switch (cmd & 0xff) {
+            /* Settings */
             case CMD_CONFIGURE:
                 for (int c = 0; c < (cmd >> 0x10); c += 4) {
                     DN_Packet_DCC_Read();
@@ -113,10 +129,12 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 DN_Packet_Send_One(CMD_WRITE_ERASE_STATUS(0x38, 0x6));
                 break;
 
+            /* Get devices information */
             case CMD_GETINFO:
                 DN_Packet_Send((uint8_t *)BUF_INIT, dcc_init_offset << 2);
                 break;
                 
+            /* Get memory size */
             case CMD_GETMEMSIZE:
                 flashIndex = (cmd >> 8) & 0xff;
                 if (flashIndex == 0) {
@@ -128,18 +146,20 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 }
                 break;
 
+            /* Flash read */
             case CMD_READ:
                 srcOffset = DN_Packet_DCC_Read();
                 srcSize = DN_Packet_DCC_Read();
                 flashIndex = (cmd >> 8) & 0xff;
                 uint8_t algo = (cmd >> 24) & 0xff;
 
+                /* Check for read size not exceeding buffer */
                 if (srcSize > DCC_BUFFER_SIZE) {
                     DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_INVALID_ARGS));
                     continue;
                 }
 
-                if (flashIndex == 0) {
+                if (flashIndex == 0) { // Direct read
                 Jump_Read_NOR:
 #ifndef DCC_TESTING
                     switch (algo) {
@@ -181,13 +201,15 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                         case MEMTYPE_SUPERAND:
                         case MEMTYPE_AND:
                         case MEMTYPE_AG_AND:
+                            /* Get driver routines */
                             devBase = (Driver *)absolute_to_relative(devices[flashIndex - 1].driver);
                             res = ((DCC_READ_PTR *)absolute_to_relative(devBase->read))(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
-                            if (res != DCC_OK) {
+                            if (res != DCC_OK) { // Check if error
                                 DN_Packet_Send_One(CMD_READ_RESP_FAIL(res));
                                 continue;
                             }
                             
+                            /* Compression */
                             switch (algo) {
                                 case CMD_READ_COMP_NONE:
                                     DN_Packet_WriteDirect(rawBuf, destSize);
@@ -222,15 +244,19 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             break;
                         case MEMTYPE_NOR:
                         default:
+                            /* NOR reads directly */
+                            srcOffset &= (mem[flashIndex - 1].size - 1);
                             srcOffset += mem[flashIndex - 1].base_offset;
                             goto Jump_Read_NOR;
                     }
                 } else {
+                    /* No flash found */
                     DN_Packet_Send_One(CMD_READ_RESP_FAIL(DCC_FLASH_NOENT));
                 }
 
                 break;
-
+            
+            /* Flash erase */
             case CMD_ERASE:
                 srcOffset = DN_Packet_DCC_Read();
                 srcSize = DN_Packet_DCC_Read();
@@ -246,6 +272,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 }
                 break;
 
+            /* Flash write */
             case CMD_WRITE:
                 flashIndex = (cmd >> 16) & 0xff;
 
@@ -264,8 +291,8 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf, mem[flashIndex - 1].block_size);
                         }
                         if ((progType & 1) && mem_has_spare[flashIndex - 1]) {
-                            DN_Packet_Read(rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
-                            checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf + mem[flashIndex - 1].block_size, mem[flashIndex - 1].block_size >> 5);
+                            DN_Packet_Read(rawBuf + ((progType & 2) ? mem[flashIndex - 1].block_size : 0), mem[flashIndex - 1].block_size >> 5);
+                            checksum_comp = DN_Calculate_CRC32(checksum_comp, rawBuf + ((progType & 2) ? mem[flashIndex - 1].block_size : 0), mem[flashIndex - 1].block_size >> 5);
                         }
                     } else {
                         uint32_t comp_len = DN_Packet_DCC_Read();
@@ -285,6 +312,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                 }
                 break;
 
+            /* Catch-all for unknown commands */
             default:
                 DN_Packet_Send_One(DCC_BAD_COMMAND(cmd & 0xff));
         }

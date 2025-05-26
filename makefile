@@ -147,8 +147,8 @@ OPT = -O2
 
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
-DEFS    = $(DDEFS) $(UDEFS)
-ADEFS   = $(DADEFS) $(UADEFS)
+DEFS    = $(DDEFS) $(UDEFS) -DCDEFS="\"FLAGS=$(DDEFS) $(UDEFS) CPU=$(MCU) PLATFORM=$(PLATFORM) DEVICES=$(DEVICES) CONTROLLERS=$(CONTROLLERS)\""
+ADEFS   = $(DADEFS) $(UADEFS) -DADEFS="\"FLAGS=$(DADEFS) $(UADEFS) CPU=$(MCU)\""
 OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
@@ -163,6 +163,10 @@ LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PR
 #
 # makefile rules
 #
+
+ifeq ($(PLATFORM), default)
+$(warning Building without platform specific routines, specify PLATFORM= to change that)
+endif
 
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
 
@@ -198,19 +202,29 @@ clean:
 	-rm -fR .dep
 
 help:
-	@echo Dumpnow DCC Loader
-	@echo 	LZO=1 = Enable LZO Compression
-	@echo 	LZ4=1 = Enable LZ4 Compression
-	@echo 	LWMEM=1 = Enable LWMEM memory management
-	@echo 	PLATFORM=(name) Select chipset platform
-	@echo 	MCU=(MCU) = Select CPU architecture
-	@echo 	CFI=1 = Enable CFI interface
-	@echo 	NAND_CONTROLLER=(name) = Enable NAND controller
-	@echo 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller
-	@echo 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller
-	@echo 	USE_ICACHE=1 = Use instruction cache (ARM9 and later)
-	@echo 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help
-	@echo	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000)
+ifeq ($(OS),Windows_NT)
+	@echo > NUL
+else
+	@echo > /dev/null
+endif
+	$(info Dumpnow DCC Loader)
+	$(info 	Optional libraries:)
+	$(info 	LZO=1 = Enable LZO Compression)
+	$(info 	LZ4=1 = Enable LZ4 Compression)
+	$(info 	LWMEM=1 = Enable LWMEM memory management)
+	$(info 	Target configuration:)
+	$(info 	PLATFORM=(name) Select chipset platform)
+	$(info 	MCU=(MCU) = Select CPU architecture)
+	$(info 	USE_ICACHE=1 = Use instruction cache (ARM9 and later))
+	$(info 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help)
+	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
+	$(info 	PROJECT=(name) = Output name)
+	$(info 	LDSCRIPT=(ld) = Linker script)
+	$(info 	Flash devices:)
+	$(info 	CFI=1 = Enable CFI interface)
+	$(info 	NAND_CONTROLLER=(name) = Enable NAND controller)
+	$(info 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller)
+	$(info 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller)
 
 #
 # Include the dependency files, should be the last of the makefile

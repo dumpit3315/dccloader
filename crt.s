@@ -48,8 +48,8 @@ _vectors:
    .global ResetHandler
    .global ExitFunction
    .global absolute_to_relative
-#if USE_BREAKPOINTS
    .global DN_Packet_DCC_WaitForBP
+#if USE_BREAKPOINTS
    .global DN_Packet_DCC_ResetBPP
    .global DN_Packet_DCC_Send
 #endif
@@ -57,24 +57,30 @@ _vectors:
    .extern __stack_und_end
 
 /* Variables */
-StartAddress:  .word 0x12345678
+StartAddress:  .word 0xffffffff
 unk1:          .word 0x12345678
-PageSize:      .word 0x12345678
+PageSize:      .word 0xffffffff
 /* Loader via H/W BP polling */
-#if USE_BREAKPOINTS
 DCC_PKT_RW_SIZE:   .word 0xffffffff
 DCC_PKT_RW_DATA:   .word 0xffffffff
 DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
 .word 0x12345678
-#endif
+
+.word __heap_size
+.word __stack_end
+.asciz "A:DumpNow DCC Loader. (c) 2025 Wrapper. Compile flags: " ADEFS
+.align
+
+/* LWMEM info */
 #if HAVE_LWMEM
 lwmem_init:
    .word __heap_start
-   .word 0x00040000
+   .word __heap_size
 lwmem_init_end:
    .word 0x00000000
    .word 0x00000000
 #endif
+
 /****************************************************************************/
 /*                           Reset handler                                  */
 /****************************************************************************/
@@ -85,24 +91,6 @@ ResetHandler:
    mov   r0, #0
    adr   r0, _vectors
 
-#ifdef SETUP_STACK_OTHERS   
-   msr   CPSR_c, #ARM_MODE_UNDEF | I_BIT | F_BIT   /* Undefined Instruction Mode */
-   ldr   sp, =__stack_und_end
-   add   sp, r0
-
-   msr   CPSR_c, #ARM_MODE_ABORT | I_BIT | F_BIT   /* Abort Mode */
-   ldr   sp, =__stack_abt_end
-   add   sp, r0
-
-   msr   CPSR_c, #ARM_MODE_FIQ | I_BIT | F_BIT     /* FIQ Mode */
-   ldr   sp, =__stack_fiq_end
-   add   sp, r0
-
-   msr   CPSR_c, #ARM_MODE_IRQ | I_BIT | F_BIT     /* IRQ Mode */
-   ldr   sp, =__stack_irq_end
-   add   sp, r0
-#endif
-
    msr   CPSR_c, #ARM_MODE_SVC | I_BIT | F_BIT     /* Supervisor Mode */
    ldr   sp, =__stack_svc_end
    add   sp, r0
@@ -110,7 +98,8 @@ ResetHandler:
 #if USE_ICACHE \
    && (( defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5T__) || defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__) ) \
    || ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
-   || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) ))
+   || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) ) \
+   || ( defined(CPU_XSCALE) ))
    mrc   p15, 0, r0, cr1, cr0, 0
    orr   r0, #0x1000
    mcr   p15, 0, r0, cr1, cr0, 0
@@ -121,12 +110,11 @@ ResetHandler:
    mov   r0, #0
    adr   r0, _vectors
 
-#ifndef DONT_CLEAR_BSS
    /*
     * Clear .bss section
     */
-   ldr   r1, =__bss_start   
-   ldr   r2, =__bss_end   
+   ldr   r1, =__bss_start
+   ldr   r2, =__bss_end
    mov   r3, #0
    
    add   r1, r0
@@ -135,19 +123,26 @@ bss_clear_loop:
    cmp   r1, r2
    strne r3, [r1], #+4
    bne   bss_clear_loop
-#endif
 
+#if HAVE_LWMEM
+   /*
+    * Clear .heap section
+    */
+   ldr   r1, =__heap_start
+   ldr   r2, =__heap_end
+   mov   r3, #0
+   
+   add   r1, r0
+   add   r2, r0
+heap_clear_loop:
+   cmp   r1, r2
+   strne r3, [r1], #+4
+   bne   heap_clear_loop
+#endif
 
    /*
     * Jump to main
     */
-    
-#ifdef ENABLE_DCC_INTERRUPTS
-   mrs   r0, cpsr
-   bic   r0, r0, #I_BIT | F_BIT     /* Enable FIQ and IRQ interrupt (TODO: RIFF doesn't enable interrupt?) */
-   msr   cpsr, r0
-#endif
-   
 #if HAVE_LWMEM
    /*
     * Setup lwmem memory manager
@@ -174,12 +169,8 @@ bss_clear_loop:
    /*
     * Start
     */
-   mov   r0, #0 /* No arguments */
-   mov   r1, #0 /* No arguments */
-   mov   r2, #0 /* No arguments */
-   mov   r3, #0 /* No arguments */
 
-   /* TOOD: Why is this line necessary */
+   /* TODO: Why is this line necessary */
 #if \
   ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
   || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
@@ -199,6 +190,8 @@ bss_clear_loop:
    adr   r1, PageSize
    ldr   r1, [r1]
 
+   mov   r2, #0 /* No arguments */
+   mov   r3, #0 /* No arguments */
 
    b dcc_main
 
@@ -288,9 +281,25 @@ DN_Packet_DCC_Send:
    /* 06 - End */
    mov   r0, #1
    bx lr
+#else
+DN_Packet_DCC_WaitForBP:
+   b DN_Packet_DCC_WaitForBP
+   bx lr
 #endif
 
 /* libc functions */
+.global memset
+memset:
+	mov	r3, r0
+memset.loop:
+	subs	r2, r2, #1
+	bmi	memset.ret
+	strb	r1, [r0], #1
+	b	memset.loop
+memset.ret:
+	mov	r0, r3
+	bx lr
+
 .global strlen
 strlen:
 	mov	r2, r0

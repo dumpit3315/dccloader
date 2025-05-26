@@ -419,7 +419,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
   }
 
   SIZE = outOffset - 4;
-  DN_Packet_DCC_Send(outOffset >> 2);
+  DN_Packet_DCC_Send((outOffset + 4) >> 2);
   DN_Packet_DCC_Send_Buffer32(MAGIC);
   DN_Packet_DCC_Send_Buffer32(SIZE);
   

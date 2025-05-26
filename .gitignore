@@ -13,3 +13,4 @@ compress_test.bat
 *.bak
 build/*.has
 dcc_test_*
+build_script/

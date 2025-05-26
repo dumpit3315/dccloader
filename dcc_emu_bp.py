@@ -7,12 +7,14 @@ from unicorn import *
 from unicorn.arm_const import *
 import time
 import struct
+import crcmod
 
 DEBUG = True
 
 bp_offset = 0
 WAIT_RESPONSE = False
 data_rd = b""
+DCC_LOADER = "build/dumpnow_bp.bin"
 
 # callback for tracing basic blocks
 def hook_block(uc, address, size, user_data):
@@ -73,13 +75,14 @@ def test_arm():
         mu.ctl_set_exits([0])
 
         mu.mem_map(0x00000000, 32 * 1024 * 1024)
+        mu.mem_map(0x12000000, 32 * 1024 * 1024)
         mu.mem_map(0x03000000, 2 * 1024 * 1024)
 
         # map 2MB memory for this emulation
         mu.mem_map(0x14000000, 2 * 1024 * 1024)
 
         # write machine code to be emulated to memory
-        mu.mem_write(0x14000000, open("build/dumpnow.bin", "rb").read())       
+        mu.mem_write(0x14000000, open(DCC_LOADER, "rb").read())       
         bp_offset = int.from_bytes(mu.mem_read(0x14000034, 4), "little")
         #mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read()) 
         #mu.mem_write(0x00000000, b"\x01\x00\x7e\x22") # Infineon NOR
@@ -106,14 +109,17 @@ def test_arm():
         def on_write(mu, access, address, size, value, data):
             if DEBUG:
                 if address <= 0x14000000:
-                    if address == 0xaaa and value == 0x98:
+                    if (address & 0x1ffff) == 0xaaa and value == 0x98:
                         mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read())
+                        mu.mem_write(0x12000000, open("cfi_32mb.bin", "rb").read())
                         
-                    elif address == 0xaaa and value == 0x90:
+                    elif (address & 0x1ffff) == 0xaaa and value == 0x90:
                         mu.mem_write(0x00000000, b"\x01\x00\x7e\x22")
+                        mu.mem_write(0x12000000, b"\x01\x00\x7e\x22")
                         
-                    elif address == 0x0 and value == 0xf0:
-                        mu.mem_write(0x00000000, open("build/dumpnow.bin", "rb").read())
+                    elif (address & 0x1ffff) == 0x0 and value == 0xf0:
+                        mu.mem_write(0x00000000, open(DCC_LOADER, "rb").read())
+                        mu.mem_write(0x12000000, open(DCC_LOADER, "rb").read())
                 # mu.reg_write(0x)
                 print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
@@ -162,6 +168,22 @@ def _dcc_write_host(data):
     assert WAIT_RESPONSE, "cannot do that while running!"
     data_rd += data.to_bytes(4, "little")
 
+def _dcc_loader_read():
+    iCount = _dcc_read_host()
+    print("C:", hex(iCount))
+    crc = crcmod.mkCrcFun(0x104c11db7, 0xffffffff, False, 0)
+    hashData = bytearray()
+
+    for _ in range(iCount):
+        dccRead = _dcc_read_host()
+        print("H:", hex(dccRead))
+        hashData += dccRead.to_bytes(4, "little")
+
+    sum = _dcc_read_host()
+    
+    hash = crc(hashData)
+    assert sum == hash, f"Checksum is invalid! 0x{sum:08x} != 0x{hash:08x}"
+
 if __name__ == '__main__':
     import threading
     import time
@@ -169,21 +191,28 @@ if __name__ == '__main__':
     t = threading.Thread(target=test_arm, daemon=True)
     t.start()
     
-    iCount = _dcc_read_host()
-    print("C:", hex(iCount))
-    
-    for _ in range(iCount + 1):
-        print("H:", hex(_dcc_read_host()))
-        
-    data_rd = b""
+    _dcc_loader_read()
     print("RUN")
-    _dcc_write_host(0x152 | 0x00000000)
-    _dcc_write_host(0x00120000)
-    _dcc_write_host(0x00000080)
+
+    if True:
+        _dcc_write_host(0x152 | 0x00000000)
+        _dcc_write_host(0x00120000)
+        _dcc_write_host(0x00000080)
+
+        WAIT_RESPONSE = False
+        _dcc_loader_read()
     
-    WAIT_RESPONSE = False
-    while len(data_rd) > 0:
-        print("H:", hex(_dcc_read_host()))
+    if True:
+        _dcc_write_host(0x252 | 0x00000000)
+        _dcc_write_host(0x00120000)
+        _dcc_write_host(0x00000080)
+
+        WAIT_RESPONSE = False
+        _dcc_loader_read()
+
+    time.sleep(4)
+
+    print("end testing")
     
     # while True:
     #     time.sleep(2)

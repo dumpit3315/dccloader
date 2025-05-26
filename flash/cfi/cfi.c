@@ -66,14 +66,9 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
     }
 
     if (CFI_Type == 4) {
-#ifdef FAIL_ON_NON_CFI
-        return DCC_PROBE_ERROR;
-#else
         qry.bit_width = 16;
         qry.size = 0x02000000;
         qry.block_size = 0x10000;
-        CFI_Type = 3;
-#endif
     }
 
     // 02 - Get Manufacturer
@@ -87,6 +82,9 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
 
     mem->manufacturer = (uint8_t)CFI_READ(offset, 0x00);
     mem->device_id = CFI_READ(offset, 0x01);
+    if (CFI_Type == 4 && mem->manufacturer != 0x1c) return DCC_PROBE_ERROR;
+    else if (CFI_Type == 4) CFI_Type = 3;
+
     uint16_t spansion_id2 = CFI_READ(offset, 0x0e);
     uint16_t spansion_id3 = CFI_READ(offset, 0x0f);
 
@@ -130,8 +128,8 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
                 mem->size = 0x00100000;
                 break;
         }
-    } else if (mem->manufacturer == 0x01) { // Spansion
-        if ((mem->device_id & 0xff) == 0x7e && spansion_id2 == 0x2221 && mem->size == 0x01000000) mem->size = 0x800000;
+    } else if (mem->manufacturer == 0x01 || mem->manufacturer == 0x04 || mem->manufacturer == 0xec || mem->manufacturer == 0xc2) { // Spansion/Fujitsu/Samsung/MXIC
+        if (mem->manufacturer == 0x01 && (mem->device_id & 0xff) == 0x7e && spansion_id2 == 0x2221 && mem->size == 0x01000000) mem->size = 0x800000; // Fix S71PL129 flash misdetecting as 16MB
         PLAT_SNPRINTF(mem->name, 255, "0x%04x/0x%04x", spansion_id2, spansion_id3);
     }
 

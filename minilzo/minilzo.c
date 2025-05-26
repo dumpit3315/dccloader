@@ -32,6 +32,7 @@
  */
 
 #define __LZO_IN_MINILZO 1
+#define LZO_CFG_FREESTANDING 1
 
 #if defined(LZO_CFG_FREESTANDING)
 #  undef MINILZO_HAVE_CONFIG_H

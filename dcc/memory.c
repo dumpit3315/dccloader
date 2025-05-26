@@ -1,27 +1,17 @@
 #include <stddef.h>
 #include "dn_dcc_proto.h"
 
+#define MEMORY_WDOG_COUNTER 0x7f
+
 void *memcpy(void *dst, const void *src, size_t len)
 {
 	const char *s = src;
 	char *d = dst;
 
 	while (len--) {
-        if ((len & 0x3f) == 0x3f) wdog_reset();
+        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
 		*d++ = *s++;
     }
-
-	return dst;
-}
-
-void *memset(void *dst, int val, size_t count)
-{
-	register uint8_t *ptr = (uint8_t *)dst;
-
-	while (count-- > 0) {
-		if ((count & 0x3f) == 0x3f) wdog_reset();
-	  	*ptr++ = val;
-	}
 
 	return dst;
 }
@@ -45,7 +35,7 @@ void *memmove(void *dst, const void *src, size_t len)
 		const char *s = (const char *)src + len;
 		char *d = (char *)dst + len;
 		while (d != end) {
-            if (((size_t)d & 0x3f) == 0x3f) wdog_reset();
+            if (((size_t)d & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
 			*--d = *--s;
         }
 	}
@@ -60,7 +50,7 @@ int memcmp(const void *s1, const void *s2, size_t len)
 	unsigned char dc;
 
 	while (len--) {
-        if ((len & 0x3f) == 0x3f) wdog_reset();
+        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
 		sc = *s++;
 		dc = *d++;
 		if (sc - dc)

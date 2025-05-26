@@ -101,5 +101,10 @@ SECTIONS
     PROVIDE (__heap_start = .);
   } > ram
 
+  .heap : {
+    __heap_end = LENGTH(ram);
+    __heap_size = LENGTH(ram) - __heap_start;
+  }
+
 }
 /*** EOF ***/

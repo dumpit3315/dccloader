@@ -7,6 +7,7 @@ from unicorn import *
 from unicorn.arm_const import *
 from capstone import *
 from capstone.arm import *
+import crcmod
 
 DEBUG = True
 
@@ -18,6 +19,7 @@ def hook_block(uc, address, size, user_data):
 status_reg = 0b0100 << 28 # By default, the DCC loader can write, but not read
 rd_reg = 0
 wr_reg = 0
+DCC_LOADER = "build/dumpnow.bin"
 
 # callback for tracing instructions
 def hook_code(uc: Uc, address, size, user_data):    
@@ -106,7 +108,7 @@ def test_arm():
         mu.mem_map(0x14000000, 2 * 1024 * 1024)
 
         # write machine code to be emulated to memory
-        mu.mem_write(0x14000000, open("build/dumpnow.bin", "rb").read())              
+        mu.mem_write(0x14000000, open(DCC_LOADER, "rb").read())              
         #mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read()) 
         #mu.mem_write(0x00000000, b"\x01\x00\x7e\x22") # Infineon NOR
         #mu.mem_write(0x14000020, b"\x00\x00\x00\x00") # Infineon NOR
@@ -141,8 +143,8 @@ def test_arm():
                         mu.mem_write(0x12000000, b"\x01\x00\x7e\x22")
                         
                     elif (address & 0x1ffff) == 0x0 and value == 0xf0:
-                        mu.mem_write(0x00000000, open("build/dumpnow.bin", "rb").read())
-                        mu.mem_write(0x12000000, open("build/dumpnow.bin", "rb").read())
+                        mu.mem_write(0x00000000, open(DCC_LOADER, "rb").read())
+                        mu.mem_write(0x12000000, open(DCC_LOADER, "rb").read())
                 # mu.reg_write(0x)
                 print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
@@ -203,10 +205,20 @@ def _dcc_loader_read():
     while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
     iCount = _dcc_read_host()
     print("C:", hex(iCount))
-    
-    for _ in range(iCount + 1):
+    crc = crcmod.mkCrcFun(0x104c11db7, 0xffffffff, False, 0)
+    hashData = bytearray()
+
+    for _ in range(iCount):
         while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
-        print("H:", hex(_dcc_read_host()))
+        dccRead = _dcc_read_host()
+        print("H:", hex(dccRead))
+        hashData += dccRead.to_bytes(4, "little")
+
+    while (_dcc_read_status_host() & 2) == 0: time.sleep(0.1)
+    sum = _dcc_read_host()
+    
+    hash = crc(hashData)
+    assert sum == hash, f"Checksum is invalid! 0x{sum:08x} != 0x{hash:08x}"
 
 if __name__ == '__main__':
     import threading
@@ -235,3 +247,4 @@ if __name__ == '__main__':
     time.sleep(4)
 
     print("end testing")
+    
