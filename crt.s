@@ -68,7 +68,7 @@ DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
 
 .word __heap_size
 .word __stack_end
-.asciz "A:DumpNow DCC Loader. (c) 2025 Wrapper. Compile flags: " ADEFS
+.asciz "A:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " ADEFS ";Compile Date: " __DATE__
 .align
 
 /* LWMEM info */
