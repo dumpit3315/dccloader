@@ -390,6 +390,9 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
   uint16_t RAW_Count;
   uint32_t rawInOffset;
 
+#if USE_BREAKPOINTS
+  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+#endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
   /* 01 - Compute output size */
@@ -457,11 +460,18 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
 
   DN_Packet_DCC_Send_Buffer_Flush();
   DN_Packet_DCC_Send(checksum);
+
+#if USE_BREAKPOINTS
+  cmdReadBuf = DN_Packet_DCC_WaitForBP();
+#endif
 }
 
 void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
   uint32_t MAGIC = CMD_WRITE_COMP_NONE;
 
+#if USE_BREAKPOINTS
+  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+#endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
   DN_Packet_DCC_Send((size + 4) >> 2);
@@ -471,6 +481,10 @@ void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
 
   DN_Packet_DCC_Send_Buffer_Flush();
   DN_Packet_DCC_Send(checksum);
+
+#if USE_BREAKPOINTS
+  cmdReadBuf = DN_Packet_DCC_WaitForBP();
+#endif
 }
 
 static uint32_t temp_read_buf;

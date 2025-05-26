@@ -47,6 +47,7 @@ def hook_code(uc: Uc, address, size, user_data):
             while WAIT_RESPONSE:
                 time.sleep(1)
 
+            print("new data:", data_rd, f"0x{m_start:08x}")
             uc.mem_write(m_start, data_rd)
             uc.reg_write(UC_ARM_REG_PC, address + 4)
             return
@@ -195,6 +196,7 @@ if __name__ == '__main__':
     print("RUN")
 
     if True:
+        data_rd = b""
         _dcc_write_host(0x152 | 0x00000000)
         _dcc_write_host(0x00120000)
         _dcc_write_host(0x00000080)
@@ -203,6 +205,7 @@ if __name__ == '__main__':
         _dcc_loader_read()
     
     if True:
+        data_rd = b""
         _dcc_write_host(0x252 | 0x00000000)
         _dcc_write_host(0x00120000)
         _dcc_write_host(0x00000080)
