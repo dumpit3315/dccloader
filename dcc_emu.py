@@ -9,6 +9,7 @@ from capstone import *
 from capstone.arm import *
 import crcmod
 
+DEBUG_INFO = True
 DEBUG = True
 
 # callback for tracing basic blocks
@@ -20,6 +21,7 @@ status_reg = 0b0100 << 28 # By default, the DCC loader can write, but not read
 rd_reg = 0
 wr_reg = 0
 DCC_LOADER = "build/dumpnow.bin"
+DCC_FW = "build/dumpnow.bin"
 
 # callback for tracing instructions
 def hook_code(uc: Uc, address, size, user_data):    
@@ -27,7 +29,7 @@ def hook_code(uc: Uc, address, size, user_data):
     
     try:
         #if address == 0x14001da0: uc.mem_write(0x0, b"\x01\x00\x7e\x22")
-        if DEBUG:
+        if DEBUG and DEBUG_INFO:
             print(">>> Tracing instruction at 0x%x, instruction size = 0x%x" %(address, size))
             print("CODE:",uc.mem_read(address, size))
             print("RSP1", hex(uc.reg_read(UC_ARM_REG_R0)))
@@ -128,7 +130,7 @@ def test_arm():
         
         def on_read(mu, access, address, size, value, data):
             #if DEBUG and address <= 0x14000000:
-            if DEBUG:
+            if DEBUG and DEBUG_INFO:
                 print("Read at", hex(address), size, mu.mem_read(address, size))
 
         def on_write(mu, access, address, size, value, data):
@@ -143,10 +145,10 @@ def test_arm():
                         mu.mem_write(0x12000000, b"\x01\x00\x7e\x22")
                         
                     elif (address & 0x1ffff) == 0x0 and value == 0xf0:
-                        mu.mem_write(0x00000000, open(DCC_LOADER, "rb").read())
-                        mu.mem_write(0x12000000, open(DCC_LOADER, "rb").read())
+                        mu.mem_write(0x00000000, open(DCC_FW, "rb").read())
+                        mu.mem_write(0x12000000, open(DCC_FW, "rb").read())
                 # mu.reg_write(0x)
-                print("Write at", hex(address), size, hex(value))
+                if DEBUG_INFO: print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
                 #     mu.mem_write(0x0, open("cfi.bin", "rb").read())
                     
@@ -230,19 +232,24 @@ if __name__ == '__main__':
     _dcc_loader_read()
     print("RUN")
 
-    if True:
-        _dcc_write_host(0x152 | 0x00000000)
-        _dcc_write_host(0x00120000)
-        _dcc_write_host(0x00000080)
+    offs = 0
 
-        _dcc_loader_read()
+    if True:
+        while offs < 0x01000000:
+            _dcc_write_host(0x152 | 0x00000000)
+            _dcc_write_host(offs)
+            _dcc_write_host(0x00020000)
+
+            _dcc_loader_read()
+            offs += 0x20000
+            raise Exception("continue")
     
-    if True:
-        _dcc_write_host(0x252 | 0x00000000)
-        _dcc_write_host(0x00120000)
-        _dcc_write_host(0x00000080)
+    # if True:
+    #     _dcc_write_host(0x252 | 0x00000000)
+    #     _dcc_write_host(0x00120000)
+    #     _dcc_write_host(0x00000080)
 
-        _dcc_loader_read()
+    #     _dcc_loader_read()
 
     time.sleep(4)
 
