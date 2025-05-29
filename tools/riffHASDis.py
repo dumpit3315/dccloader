@@ -93,5 +93,12 @@ if __name__ == "__main__":
         elif cmd == -255:
             print(f"{cmd} (RETURN)")
 
+        elif cmd == -16:
+            print(f"{cmd}: {f.read(4)}")
+            
+        elif cmd == -65536:
+            print(f"{cmd}: {f.read(8)}")
+
+
         else:
             raise Exception(f"command {cmd} {hex(f.tell() - 4)}")
