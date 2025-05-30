@@ -88,10 +88,10 @@ ResetHandler:
    /*
     * Setup a stack for each mode
     */
+   msr   CPSR_c, #ARM_MODE_SVC | I_BIT | F_BIT     /* Supervisor Mode */
    mov   r0, #0
    adr   r0, _vectors
 
-   msr   CPSR_c, #ARM_MODE_SVC | I_BIT | F_BIT     /* Supervisor Mode */
    ldr   sp, =__stack_svc_end
    add   sp, r0
 
@@ -130,7 +130,6 @@ bss_clear_loop:
     */
    ldr   r1, =__heap_start
    ldr   r2, =__heap_end
-   mov   r3, #0
    
    add   r1, r0
    add   r2, r0

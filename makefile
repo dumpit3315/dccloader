@@ -103,7 +103,7 @@ DDEFS += -DCPU_XSCALE
 DADEFS += -DCPU_XSCALE
 endif
 
-ifeq ($(USE_ICACHE), 1)
+ifeq ($(ICACHE), 1)
 DADEFS += -DUSE_ICACHE=1
 else
 DADEFS += -DUSE_ICACHE=0
@@ -221,7 +221,7 @@ endif
 	$(info 	Target configuration:)
 	$(info 	PLATFORM=(name) Select chipset platform)
 	$(info 	MCU=(MCU) = Select CPU architecture)
-	$(info 	USE_ICACHE=1 = Use instruction cache (ARM9 and later))
+	$(info 	ICACHE=1 = Use instruction cache (ARM9 and later))
 	$(info 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help)
 	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
 	$(info 	PROJECT=(name) = Output name)
