@@ -478,7 +478,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
     }
   }
 
-  DN_Packet_DCC_Send((outOffset + 4) >> 2);
+  DN_Packet_DCC_Send(ALIGN4(outOffset) >> 2);
   DN_Packet_DCC_Send_Buffer32(CMD_WRITE_COMP_RLE);
   DN_Packet_DCC_Send_Buffer32(outOffset - 4);
   
@@ -557,7 +557,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
   }
 
   SIZE = outOffset - 4;
-  DN_Packet_DCC_Send((outOffset + 4) >> 2);
+  DN_Packet_DCC_Send(ALIGN4(outOffset) >> 2);
   DN_Packet_DCC_Send_Buffer32(MAGIC);
   DN_Packet_DCC_Send_Buffer32(SIZE);
   
@@ -610,7 +610,7 @@ void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
 #endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
-  DN_Packet_DCC_Send((size + 4) >> 2);
+  DN_Packet_DCC_Send(ALIGN4(size + 4) >> 2);
   DN_Packet_DCC_Send_Buffer32(MAGIC);
   
   DN_Packet_DCC_Send_Buffer8_Multi(src, size);
