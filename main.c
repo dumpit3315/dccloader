@@ -4,6 +4,9 @@
 
 typedef DCC_RETURN DCC_INIT_PTR(DCCMemory *mem, uint32_t offset);
 typedef DCC_RETURN DCC_READ_PTR(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
+typedef DCC_RETURN DCC_WRITE_PTR(DCCMemory *mem, uint32_t offset, uint8_t *src, uint32_t size);
+typedef DCC_RETURN DCC_ERASE_PTR(DCCMemory *mem, uint32_t offset, uint32_t size);
+typedef void DCC_CONFIG_PTR(DCCMemory *mem, Configuration config, uint32_t value);
 
 #ifdef CDEFS
 const char *CFLAGS = "C:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;

@@ -47,5 +47,8 @@ DCC_RETURN SuperAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t
 
 Driver superand_controller = {
     .initialize = SuperAND_Probe,
-    .read = SuperAND_Read
+    .read = SuperAND_Read,
+    .write = NULL,
+    .erase = NULL,
+    .configure = NULL
 };

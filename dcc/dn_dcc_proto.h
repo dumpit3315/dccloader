@@ -29,9 +29,16 @@ typedef struct {
     char name[256];
 } DCCMemory;
 
+typedef enum {
+    CONFIG_ECC
+} Configuration;
+
 typedef struct {
     DCC_RETURN (*initialize)(DCCMemory *mem, uint32_t offset);
     DCC_RETURN (*read)(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
+    DCC_RETURN (*write)(DCCMemory *mem, uint32_t offset, uint8_t *src, uint32_t size);
+    DCC_RETURN (*erase)(DCCMemory *mem, uint32_t offset, uint32_t size);
+    void (*configure)(DCCMemory *mem, Configuration config, uint32_t value);
 } Driver;
 
 typedef struct {

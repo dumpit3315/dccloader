@@ -19,5 +19,8 @@ DCC_RETURN Memdump_Probe(DCCMemory *mem, uint32_t offset) {
 
 Driver memdump = {
     .initialize = Memdump_Probe,
-    .read = NULL
+    .read = NULL,
+    .write = NULL,
+    .erase = NULL,
+    .configure = NULL
 };

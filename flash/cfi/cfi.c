@@ -100,6 +100,7 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
     CFI_WRITE(offset, 0, CFI_Type == 2 ? 0xf0 : 0xff);
 
     if (mem->manufacturer == 0x1c) { // Renesas flash chip
+        PLAT_SNPRINTF(mem->name, 255, "Detected by guesswork, report if it detects the wrong flash size");
         switch (mem->device_id >> 4) {
             case 0x7: // Found in PNC DM-P100
             case 0xf: // Found in Sanyo RL-4920
@@ -138,5 +139,8 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
 
 Driver nor_cfi_controller = {
     .initialize = CFI_Probe,
-    .read = NULL
+    .read = NULL,
+    .write = NULL,
+    .erase = NULL,
+    .configure = NULL
 };

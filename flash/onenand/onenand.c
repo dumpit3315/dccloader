@@ -89,5 +89,8 @@ DCC_RETURN OneNAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t 
 
 Driver onenand_controller = {
     .initialize = OneNAND_Probe,
-    .read = OneNAND_Read
+    .read = OneNAND_Read,
+    .write = NULL,
+    .erase = NULL,
+    .configure = NULL
 };

@@ -86,5 +86,8 @@ DCC_RETURN NAND_Read(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *de
 
 Driver nand_controller = {
     .initialize = NAND_Probe,
-    .read = NAND_Read
+    .read = NAND_Read,
+    .write = NULL,
+    .erase = NULL,
+    .configure = NULL
 };
