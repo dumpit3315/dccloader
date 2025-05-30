@@ -26,7 +26,7 @@ typedef struct {
     uint32_t nor_cmd_set;
     uint32_t base_offset;
     MemTypes type;
-    char name[255];
+    char name[256];
 } DCCMemory;
 
 typedef struct {
