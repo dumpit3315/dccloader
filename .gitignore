@@ -14,3 +14,4 @@ compress_test.bat
 build/*.has
 dcc_test_*
 build_script/
+test_emu/
