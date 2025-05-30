@@ -603,15 +603,13 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
 */
 
 void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
-  uint32_t MAGIC = CMD_WRITE_COMP_NONE;
-
 #if USE_BREAKPOINTS
   DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
 #endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
   DN_Packet_DCC_Send(ALIGN4(size + 4) >> 2);
-  DN_Packet_DCC_Send_Buffer32(MAGIC);
+  DN_Packet_DCC_Send_Buffer32(CMD_WRITE_COMP_NONE);
   
   DN_Packet_DCC_Send_Buffer8_Multi(src, size);
 
