@@ -39,7 +39,7 @@ DLIBS =
 PROJECT = dumpnow
 
 # Define linker script file here
-LDSCRIPT = build/ram.ld
+LDSCRIPT = linker/ram.ld
 
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
@@ -124,10 +124,16 @@ else
 DDEFS += -DDCC_BUFFER_SIZE=0x40000
 endif
 
-ifeq ($(OLD_IO), 1)
-DDEFS += -DUSE_OLD_DCC_IO=1
-else
+ifeq ($(NEW_IO), 1)
 DDEFS += -DUSE_OLD_DCC_IO=0
+else
+DDEFS += -DUSE_OLD_DCC_IO=1
+endif
+
+ifeq ($(NO_COMPRESS), 1)
+DDEFS += -DDISABLE_COMPRESS=1
+else
+DDEFS += -DDISABLE_COMPRESS=0
 endif
 
 SRC = main.c dcc/pic.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
@@ -231,7 +237,8 @@ endif
 	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
 	$(info 	PROJECT=(name) = Output name)
 	$(info 	LDSCRIPT=(ld) = Linker script)
-	$(info 	OLD_IO=1 = Use old DCC IO routines)
+	$(info 	NEW_IO=1 = Use new DCC IO routines, currently doesn't work in RIFF)
+	$(info 	NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
 	$(info 	BIG_ENDIAN=1 = Big endian format)
 	$(info 	Flash devices:)
 	$(info 	CFI=1 = Enable CFI interface)
