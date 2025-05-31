@@ -53,6 +53,7 @@ DEVICES = flash/mmap/mmap.c
 CONTROLLERS = 
 ADD_DEPS = 
 PLATFORM = default
+LOADER_DEVICES = default
 
 # Additional deps
 ifeq ($(LZO), 1)
@@ -129,7 +130,7 @@ else
 DDEFS += -DUSE_OLD_DCC_IO=0
 endif
 
-SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
+SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
 ASRC = crt.s
@@ -153,7 +154,7 @@ OPT = -O2
 
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
-DEFS    = $(DDEFS) $(UDEFS) -DCDEFS="\"FLAGS=$(DDEFS) $(UDEFS) CPU=$(MCU) PLATFORM=$(PLATFORM) DEVICES=$(DEVICES) CONTROLLERS=$(CONTROLLERS)\""
+DEFS    = $(DDEFS) $(UDEFS) -DCDEFS="\"FLAGS=$(DDEFS) $(UDEFS) CPU=$(MCU) PLATFORM=$(PLATFORM) LOADER_DEVICES=$(LOADER_DEVICES) DEVICES=$(DEVICES) CONTROLLERS=$(CONTROLLERS)\""
 ADEFS   = $(DADEFS) $(UADEFS) -DADEFS="\"FLAGS=$(DADEFS) $(UADEFS) CPU=$(MCU)\""
 OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
 LIBS    = $(DLIBS) $(ULIBS)
@@ -232,6 +233,7 @@ endif
 	$(info 	NAND_CONTROLLER=(name) = Enable NAND controller)
 	$(info 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller)
 	$(info 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller)
+	$(info 	LOADER_DEVICES=(name) = Select which memory combination to use)
 
 #
 # Include the dependency files, should be the last of the makefile
