@@ -9,7 +9,7 @@ typedef struct {
 	uint32_t bits;
 } nand_info;
 
-extern nand_info flash_ids[];
+extern const nand_info flash_ids[];
 
 typedef enum {
 	NAND_STATUS_FAIL = 0x01,

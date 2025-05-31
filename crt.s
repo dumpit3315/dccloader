@@ -47,7 +47,7 @@ _vectors:
 
    .global ResetHandler
    .global ExitFunction
-   .global absolute_to_relative
+   .extern pic_relocate
    .global DN_Packet_DCC_WaitForBP
 #if USE_BREAKPOINTS
    .global DN_Packet_DCC_ResetBPP
@@ -180,6 +180,24 @@ heap_clear_loop:
    mrc   p14, 0, r0, cr1, cr0, 0
 #endif
 
+   /* Setup PIC */
+   mov   r0, #0
+   adr   r0, _vectors
+
+   ldr   r1, =_reloc_start
+   add   r1, r0
+
+   ldr   r2, =_reloc_end
+   add   r2, r0
+
+   ldr   r3, =edata
+
+   bl    pic_relocate
+
+   /* Setup GOT */
+   ldr   r9, =_sgot
+   add   r9, r0
+
    /* Jump to Main */
    mov   r0, #0
    adr   r0, StartAddress
@@ -221,13 +239,6 @@ IRQHandler:
 
 FIQHandler:
    b FIQHandler
-
-/* PIC routines */
-absolute_to_relative:
-   mov   r1, #0
-   adr   r1, _vectors
-   add   r0, r1
-   bx lr
 
 /* Breakpoint loader routines */
 #if USE_BREAKPOINTS

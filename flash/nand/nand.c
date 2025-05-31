@@ -2,7 +2,7 @@
 #include "controller/controller.h"
 #include "dcc/dn_dcc_proto.h"
 
-nand_info flash_ids[] = {
+const nand_info flash_ids[] = {
     {0x6e, 0x100, 0x100000, 0x1000, 8},
     {0x64, 0x100, 0x200000, 0x1000, 8},
     {0xe8, 0x100, 0x100000, 0x1000, 8},

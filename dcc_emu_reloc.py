@@ -101,7 +101,7 @@ def test_arm():
         # Initialize emulator in ARM mode
         mu = Uc(UC_ARCH_ARM, UC_MODE_ARM)
         mu.ctl_exits_enabled(True)
-        mu.ctl_set_exits([0])
+        mu.ctl_set_exits([0x14000178])
 
         mu.mem_map(0x00000000, 32 * 1024 * 1024)
         mu.mem_map(0x12000000, 32 * 1024 * 1024)
@@ -224,35 +224,36 @@ def _dcc_loader_read():
     assert sum == hash, f"Checksum is invalid! 0x{sum:08x} != 0x{hash:08x}"
 
 if __name__ == '__main__':
-    import threading
-    import time
+    test_arm()
+    # import threading
+    # import time
     
-    t = threading.Thread(target=test_arm, daemon=True)
-    t.start()
+    # t = threading.Thread(target=test_arm, daemon=True)
+    # t.start()
     
-    _dcc_loader_read()
-    print("RUN")
+    # _dcc_loader_read()
+    # print("RUN")
 
-    offs = 0
+    # offs = 0
 
-    if True:
-        while offs < 0x01000000:
-            _dcc_write_host(0x152 | 0x00000000)
-            _dcc_write_host(offs)
-            _dcc_write_host(0x00020000)
-
-            _dcc_loader_read()
-            offs += 0x20000
-            raise Exception("continue")
-    
     # if True:
-    #     _dcc_write_host(0x252 | 0x00000000)
-    #     _dcc_write_host(0x00120000)
-    #     _dcc_write_host(0x00000080)
+    #     while offs < 0x01000000:
+    #         _dcc_write_host(0x152 | 0x00000000)
+    #         _dcc_write_host(offs)
+    #         _dcc_write_host(0x00020000)
 
-    #     _dcc_loader_read()
+    #         _dcc_loader_read()
+    #         offs += 0x20000
+    #         raise Exception("continue")
+    
+    # # if True:
+    # #     _dcc_write_host(0x252 | 0x00000000)
+    # #     _dcc_write_host(0x00120000)
+    # #     _dcc_write_host(0x00000080)
 
-    time.sleep(4)
+    # #     _dcc_loader_read()
 
-    print("end testing")
+    # time.sleep(4)
+
+    # print("end testing")
     

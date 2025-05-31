@@ -9,7 +9,7 @@ typedef DCC_RETURN DCC_ERASE_PTR(DCCMemory *mem, uint32_t offset, uint32_t size)
 typedef void DCC_CONFIG_PTR(DCCMemory *mem, Configuration config, uint32_t value);
 
 #ifdef CDEFS
-const char *CFLAGS = "C:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;
+const char CFLAGS[] = "C:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;
 #endif
 
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];
@@ -18,9 +18,6 @@ static uint8_t compBuf[DCC_BUFFER_SIZE + 0x4000];
 #endif
 #ifdef DCC_TESTING
 extern void DCC_COMPRESS_MEMCPY(uint32_t algo, uint32_t src_offset, uint32_t size);
-void *absolute_to_relative(void* ptr) { return ptr; };
-#else
-extern void *absolute_to_relative(void *ptr);
 #endif
 
 size_t strlen(const char *str);
@@ -32,7 +29,6 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
     uint32_t BUF_INIT[2048];
     uint32_t dcc_init_offset = 0;
     uint32_t ext_mem;
-    Driver *devBase;
     DCC_RETURN res;
 
     /* 01 - Probe flash devices */
@@ -40,8 +36,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
         if (!devices[i].driver) break; // Break when reaching the end of list
 
         /* Probe device */
-        devBase = (Driver *)absolute_to_relative(devices[i].driver);
-        res = ((DCC_INIT_PTR *)absolute_to_relative(devBase->initialize))(&mem[i], devices[i].base_offset);
+        res = devices[i].driver->initialize(&mem[i], devices[i].base_offset);
         if (res != DCC_OK) mem[i].type = MEMTYPE_NONE;
 
         /* Print appropriate value */
@@ -219,8 +214,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                         case MEMTYPE_AND:
                         case MEMTYPE_AG_AND:
                             /* Get driver routines */
-                            devBase = (Driver *)absolute_to_relative(devices[flashIndex - 1].driver);
-                            res = ((DCC_READ_PTR *)absolute_to_relative(devBase->read))(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
+                            res = devices[flashIndex - 1].driver->read(&mem[flashIndex - 1], srcOffset, srcSize, rawBuf, &destSize);
                             if (res != DCC_OK) { // Check if error
                                 DN_Packet_Send_One(CMD_READ_RESP_FAIL(res));
                                 continue;

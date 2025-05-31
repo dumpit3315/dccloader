@@ -21,6 +21,11 @@ ABT_STACK_SIZE = 0x0100;
 UND_STACK_SIZE = 0x0100;
 SVC_STACK_SIZE = 0x0100;
 
+PHDRS
+{
+  code         PT_LOAD;
+  data         PT_LOAD;
+}
 
 MEMORY
 {
@@ -49,7 +54,7 @@ SECTIONS
     *(.glue_7);
     . = ALIGN(4);
     etext = .;
-  } > ram
+  } > ram :code
 
   .data :
   {
@@ -57,12 +62,41 @@ SECTIONS
     *(.data)
     . = ALIGN(4);
     edata = .;
-    _edata = .;
     PROVIDE (__data_end = .);
-  } > ram
+  } > ram :data
+
+  .plt : ALIGN(4)
+  {
+      *(.plt)
+      . = ALIGN(4);
+  } > ram :code
+
+  .got : ALIGN(4)
+  {
+      _sgot = .;
+      _sgot_main = .;
+      *(.got)
+      _egot_main = .;
+  } > ram :data
+    
+  .got.plt : ALIGN(4)
+  {
+      _sgot_plt = .;
+      *(.got.plt)
+      _egot_plt = .;
+      _egot = .;
+      _edata = .;
+  } > ram :data
+
+  .rel.dyn : ALIGN(4)
+  {
+      _reloc_start = .;
+      *(.rel.dyn)
+  } > ram :data
 
   .bss :
   {
+    _reloc_end = .;
     PROVIDE (__bss_start = .);
     *(.bss)
     *(COMMON)

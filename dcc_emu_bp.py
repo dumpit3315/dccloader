@@ -35,6 +35,7 @@ def hook_code(uc: Uc, address, size, user_data):
             print("RSP2", hex(uc.reg_read(UC_ARM_REG_R1)))
             print("RSP3", hex(uc.reg_read(UC_ARM_REG_R2)))
             print("RSP4", hex(uc.reg_read(UC_ARM_REG_R3)))
+            print("RLOC", hex(uc.reg_read(UC_ARM_REG_R9)))
             print("SP", hex(uc.reg_read(UC_ARM_REG_SP)))
             print("SP_DATA", uc.mem_read(uc.reg_read(UC_ARM_REG_SP), 0x10)) 
         

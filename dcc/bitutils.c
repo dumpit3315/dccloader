@@ -16,12 +16,12 @@ static void _set_bit32(uint32_t offset, uint32_t bit_position, uint32_t bit_mask
     WRITE_U32(offset, (READ_U32(offset) & ~(bit_mask << bit_position)) | ((value & bit_mask) << bit_position));
 }
 
-uint32_t GET_BIT32(uint32_t offset, bitmask bitmask)
+uint32_t GET_BIT32(uint32_t offset, const bitmask bitmask)
 {
     return _get_bit32(offset, bitmask.bit_pos, bitmask.bit_mask);
 }
 
-void SET_BIT32(uint32_t offset, bitmask bitmask, uint32_t value)
+void SET_BIT32(uint32_t offset, const bitmask bitmask, uint32_t value)
 {
     _set_bit32(offset, bitmask.bit_pos, bitmask.bit_mask, value);
 }
@@ -38,12 +38,12 @@ static void _set_bit16(uint32_t offset, uint32_t bit_position, uint32_t bit_mask
 }
 
 
-uint16_t GET_BIT16(uint32_t offset, bitmask bitmask)
+uint16_t GET_BIT16(uint32_t offset, const bitmask bitmask)
 {
     return _get_bit16(offset, bitmask.bit_pos, bitmask.bit_mask);
 }
 
-void SET_BIT16(uint32_t offset, bitmask bitmask, uint16_t value)
+void SET_BIT16(uint32_t offset, const bitmask bitmask, uint16_t value)
 {
     _set_bit16(offset, bitmask.bit_pos, bitmask.bit_mask, value);
 }
@@ -60,12 +60,12 @@ static void _set_bit8(uint32_t offset, uint32_t bit_position, uint32_t bit_mask,
     WRITE_U8(offset, (READ_U8(offset) & ~(bit_mask << bit_position)) | ((value & bit_mask) << bit_position));
 }
 
-uint8_t GET_BIT8(uint32_t offset, bitmask bitmask)
+uint8_t GET_BIT8(uint32_t offset, const bitmask bitmask)
 {
     return _get_bit8(offset, bitmask.bit_pos, bitmask.bit_mask);
 }
 
-void SET_BIT8(uint32_t offset, bitmask bitmask, uint8_t value)
+void SET_BIT8(uint32_t offset, const bitmask bitmask, uint8_t value)
 {
     _set_bit8(offset, bitmask.bit_pos, bitmask.bit_mask, value);
 }

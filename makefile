@@ -130,7 +130,7 @@ else
 DDEFS += -DUSE_OLD_DCC_IO=0
 endif
 
-SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
+SRC = main.c dcc/pic.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
 ASRC = crt.s
@@ -160,9 +160,13 @@ OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
 
-ASFLAGS = $(MCFLAGS) -fPIC -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
-CPFLAGS = $(MCFLAGS) -fPIC -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -fPIC -fPIE -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+ifeq ($(BIG_ENDIAN), 1)
+MCFLAGS += -mbig-endian -mbe32
+endif
+
+ASFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+CPFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -pie -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
@@ -228,6 +232,7 @@ endif
 	$(info 	PROJECT=(name) = Output name)
 	$(info 	LDSCRIPT=(ld) = Linker script)
 	$(info 	OLD_IO=1 = Use old DCC IO routines)
+	$(info 	BIG_ENDIAN=1 = Big endian format)
 	$(info 	Flash devices:)
 	$(info 	CFI=1 = Enable CFI interface)
 	$(info 	NAND_CONTROLLER=(name) = Enable NAND controller)

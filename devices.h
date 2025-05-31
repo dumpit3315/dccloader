@@ -1,4 +1,4 @@
 #pragma once
 #include "dcc/dn_dcc_proto.h"
 
-extern Device devices[];
+extern const Device devices[];
