@@ -102,12 +102,12 @@ DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
     if (mem->manufacturer == 0x1c) { // Renesas flash chip
         PLAT_SNPRINTF(mem->name, 255, "Detected by guesswork, report if it detects the wrong flash size");
         switch (mem->device_id >> 4) {
-            case 0x7: // Found in PNC DM-P100
+            case 0x7: // Found in PNC DM-P100/Sanyo MM-5600
             case 0xf: // Found in Sanyo RL-4920
                 mem->size = 0x02000000;
                 break;
 
-            case 0xc: // Found in Sanyo SCP-3100
+            case 0xc: // Found in Sanyo SCP-3100/Sanyo MM-7400
                 mem->size = 0x01000000;
                 break;
 
