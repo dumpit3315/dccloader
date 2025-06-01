@@ -237,7 +237,7 @@ endif
 	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
 	$(info 	PROJECT=(name) = Output name)
 	$(info 	LDSCRIPT=(ld) = Linker script)
-	$(info 	NEW_IO=1 = Use new DCC IO routines, currently doesn't work in RIFF)
+	$(info 	NEW_IO=1 = Use new DCC IO routines, RLE currently doesn't work in RIFF)
 	$(info 	NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
 	$(info 	BIG_ENDIAN=1 = Big endian format)
 	$(info 	Flash devices:)

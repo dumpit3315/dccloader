@@ -158,7 +158,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                     switch (algo) {
                         #if USE_OLD_DCC_IO
                         case CMD_READ_COMP_RLE:
-                        #if !USE_BREAKPOINTS
+                        #if !USE_BREAKPOINTS && !DISABLE_COMPRESS
                             dcc_comp_packet_size = DN_Packet_Compress((uint8_t *)srcOffset, srcSize, compBuf);
                             DN_Packet_Send(compBuf, dcc_comp_packet_size);
                             break;
@@ -169,7 +169,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             break;
                         #else
                         case CMD_READ_COMP_RLE:
-                        #if !USE_BREAKPOINTS
+                        #if !USE_BREAKPOINTS && !DISABLE_COMPRESS
                             DN_Packet_WriteDirectCompressed((uint8_t *)srcOffset, srcSize);
                             break;
                         #endif
@@ -219,7 +219,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                             switch (algo) {
                                 #if USE_OLD_DCC_IO
                                 case CMD_READ_COMP_RLE:
-                                #if !USE_BREAKPOINTS
+                                #if !USE_BREAKPOINTS && !DISABLE_COMPRESS
                                     dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
                                     DN_Packet_Send(compBuf, dcc_comp_packet_size);
                                     break;
@@ -230,7 +230,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
                                     break;
                                 #else
                                 case CMD_READ_COMP_RLE:
-                                #if !USE_BREAKPOINTS
+                                #if !USE_BREAKPOINTS && !DISABLE_COMPRESS
                                     DN_Packet_WriteDirectCompressed(rawBuf, destSize);
                                     //dcc_comp_packet_size = DN_Packet_Compress(rawBuf, destSize, compBuf);
                                     break;
