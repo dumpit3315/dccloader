@@ -11,7 +11,7 @@ dev_resource/
 compress_test.bat
 *.cmm
 *.bak
-build/*.has
+build/
 dcc_test_*
 build_script/
 test_emu/
