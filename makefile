@@ -170,9 +170,9 @@ ifeq ($(BIG_ENDIAN), 1)
 MCFLAGS += -mbig-endian -mbe32
 endif
 
-ASFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
-CPFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -mgeneral-regs-only -fPIE -pie -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+ASFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+CPFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -pie -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
