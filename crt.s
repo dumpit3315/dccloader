@@ -39,7 +39,7 @@ _vectors:
    b SWIHandler      /* Software interrupt    */
    b PAbortHandler   /* Prefetch abort        */
    b DAbortHandler   /* Data abort            */
-   b 0               /* Reserved              */
+   b CrashHandler    /* Reserved              */
    b IRQHandler      /* IRQ interrupt         */
    b FIQHandler      /* FIQ interrupt         */
 
@@ -58,13 +58,23 @@ _vectors:
 
 /* Variables */
 StartAddress:  .word 0xffffffff
-unk1:          .word 0x12345678
+FlashSize:     .word 0x0
 PageSize:      .word 0xffffffff
 /* Loader via H/W BP polling */
 DCC_PKT_RW_SIZE:   .word 0xffffffff
 DCC_PKT_RW_DATA:   .word 0xffffffff
 DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
-.word 0x12345678
+DCC_CANWRITE:      .word 0x0
+
+UndefHandler:
+SWIHandler:
+PAbortHandler:
+DAbortHandler:
+IRQHandler:
+FIQHandler:
+CrashHandler:
+   b CrashHandler
+.word CrashHandler
 
 .word __heap_size
 .word __stack_end
@@ -89,11 +99,6 @@ ResetHandler:
     * Setup a stack for each mode
     */
    msr   CPSR_c, #ARM_MODE_SVC | I_BIT | F_BIT     /* Supervisor Mode */
-   mov   r0, #0
-   adr   r0, _vectors
-
-   ldr   sp, =__stack_svc_end
-   add   sp, r0
 
 #if USE_ICACHE \
    && (( defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5E__) || defined(__ARM_ARCH_5T__) || defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_5TEJ__) ) \
@@ -104,6 +109,23 @@ ResetHandler:
    orr   r0, #0x1000
    mcr   p15, 0, r0, cr1, cr0, 0
 #endif
+
+   /* TODO: Why is this line necessary */
+#if \
+  ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
+  || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
+   mrc   p14, 0, r0, cr0, cr5, 0
+#elif defined(CPU_XSCALE)
+   mrc   p14, 0, r0, cr9, cr0, 0
+#else
+   mrc   p14, 0, r0, cr1, cr0, 0
+#endif
+
+   mov   r0, #0
+   adr   r0, _vectors
+
+   ldr   sp, =__stack_svc_end
+   add   sp, r0
 
    bl plat_init
 
@@ -169,17 +191,6 @@ heap_clear_loop:
     * Start
     */
 
-   /* TODO: Why is this line necessary */
-#if \
-  ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
-  || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
-   mrc   p14, 0, r0, cr0, cr5, 0
-#elif defined(CPU_XSCALE)
-   mrc   p14, 0, r0, cr9, cr0, 0
-#else
-   mrc   p14, 0, r0, cr1, cr0, 0
-#endif
-
    /* Setup PIC */
    mov   r0, #0
    adr   r0, _vectors
@@ -217,28 +228,6 @@ ExitFunction:
    nop
    nop
    b ExitFunction
-
-/****************************************************************************/
-/*                         Default interrupt handler                        */
-/****************************************************************************/
-
-UndefHandler:
-   b UndefHandler
-
-SWIHandler:
-   b SWIHandler
-
-PAbortHandler:
-   b PAbortHandler
-
-DAbortHandler:
-   b DAbortHandler
-
-IRQHandler:
-   b IRQHandler
-
-FIQHandler:
-   b FIQHandler
 
 /* Breakpoint loader routines */
 #if USE_BREAKPOINTS
