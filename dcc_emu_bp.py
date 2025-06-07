@@ -5,26 +5,26 @@
 from __future__ import print_function
 from unicorn import *
 from unicorn.arm_const import *
-import time
-import struct
 import crcmod
+import struct
 
+DEBUG_INFO = True
 DEBUG = True
-
-bp_offset = 0
-WAIT_RESPONSE = False
-data_rd = b""
-DCC_LOADER = "build/dumpnow_bp.bin"
 
 # callback for tracing basic blocks
 def hook_block(uc, address, size, user_data):
     pass
     #print(">>> Tracing basic block at 0x%x, block size = 0x%x" %(address, size))
 
+bp_offset = 0
+WAIT_RESPONSE = False
+data_rd = b""
+DCC_LOADER = "build/dumpnow_bp.bin"
+DCC_FW = "build/dumpnow_bp.bin"
 
 # callback for tracing instructions
 def hook_code(uc: Uc, address, size, user_data):    
-    global status_reg, wr_reg, WAIT_RESPONSE, data_rd
+    global WAIT_RESPONSE, data_rd
     
     try:
         #if address == 0x14001da0: uc.mem_write(0x0, b"\x01\x00\x7e\x22")
@@ -65,6 +65,8 @@ def hook_code(uc: Uc, address, size, user_data):
     # opc2 = 0
     # val = ??
    
+
+
 # Test ARM
 def test_arm():
     global bp_offset
@@ -84,7 +86,7 @@ def test_arm():
         mu.mem_map(0x14000000, 2 * 1024 * 1024)
 
         # write machine code to be emulated to memory
-        mu.mem_write(0x14000000, open(DCC_LOADER, "rb").read())       
+        mu.mem_write(0x14000000, open(DCC_LOADER, "rb").read())
         bp_offset = int.from_bytes(mu.mem_read(0x14000034, 4), "little")
         #mu.mem_write(0x00000000, open("cfi_32mb.bin", "rb").read()) 
         #mu.mem_write(0x00000000, b"\x01\x00\x7e\x22") # Infineon NOR
@@ -105,7 +107,7 @@ def test_arm():
         
         def on_read(mu, access, address, size, value, data):
             #if DEBUG and address <= 0x14000000:
-            if DEBUG:
+            if DEBUG and DEBUG_INFO:
                 print("Read at", hex(address), size, mu.mem_read(address, size))
 
         def on_write(mu, access, address, size, value, data):
@@ -120,10 +122,10 @@ def test_arm():
                         mu.mem_write(0x12000000, b"\x01\x00\x7e\x22")
                         
                     elif (address & 0x1ffff) == 0x0 and value == 0xf0:
-                        mu.mem_write(0x00000000, open(DCC_LOADER, "rb").read())
-                        mu.mem_write(0x12000000, open(DCC_LOADER, "rb").read())
+                        mu.mem_write(0x00000000, open(DCC_FW, "rb").read())
+                        mu.mem_write(0x12000000, open(DCC_FW, "rb").read())
                 # mu.reg_write(0x)
-                print("Write at", hex(address), size, hex(value))
+                if DEBUG_INFO: print("Write at", hex(address), size, hex(value))
                 # if value == 0x98:
                 #     mu.mem_write(0x0, open("cfi.bin", "rb").read())
                     
@@ -196,27 +198,27 @@ if __name__ == '__main__':
     _dcc_loader_read()
     print("RUN")
 
-    if True:
-        data_rd = b""
-        _dcc_write_host(0x152 | 0x00000000)
-        _dcc_write_host(0x00120000)
-        _dcc_write_host(0x00000080)
+    offs = 0
 
-        WAIT_RESPONSE = False
-        _dcc_loader_read()
+    if True:
+        while offs < 0x01000000:
+            _dcc_write_host(0x152 | 0x00000000)
+            _dcc_write_host(offs)
+            _dcc_write_host(0x00020000)
+
+            WAIT_RESPONSE = False
+            _dcc_loader_read()
+            offs += 0x20000
+            raise Exception("continue")
     
-    if True:
-        data_rd = b""
-        _dcc_write_host(0x252 | 0x00000000)
-        _dcc_write_host(0x00120000)
-        _dcc_write_host(0x00000080)
+    # if True:
+    #     _dcc_write_host(0x252 | 0x00000000)
+    #     _dcc_write_host(0x00120000)
+    #     _dcc_write_host(0x00000080)
 
-        WAIT_RESPONSE = False
-        _dcc_loader_read()
+    #     _dcc_loader_read()
 
     time.sleep(4)
 
     print("end testing")
     
-    # while True:
-    #     time.sleep(2)

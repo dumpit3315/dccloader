@@ -307,8 +307,18 @@ uint32_t DN_Packet_DCC_Read() {
 static uint8_t cmdBuf[DCC_BUFFER_SIZE + 0x4000];
 static uint32_t *cmdReadBuf;
 extern uint32_t *DN_Packet_DCC_WaitForBP(void);
-extern void DN_Packet_DCC_ResetBPP(uint32_t *command_buf);
-extern uint32_t DN_Packet_DCC_Send(uint32_t data);
+extern uint8_t *DCC_PKT_RW_DATA;
+extern uint32_t DCC_PKT_RW_SIZE;
+
+void DN_Packet_DCC_ResetBPP(uint8_t *command_buf) {
+  DCC_PKT_RW_DATA = command_buf;
+  DCC_PKT_RW_SIZE = 0;
+};
+uint32_t DN_Packet_DCC_Send(uint32_t data) {
+  *((uint32_t *)(DCC_PKT_RW_DATA + DCC_PKT_RW_SIZE)) = data;
+  DCC_PKT_RW_SIZE += 4;
+  return 1;
+};
 uint32_t DN_Packet_DCC_Read(void) {
   return *cmdReadBuf++;
 };
@@ -367,7 +377,7 @@ void DN_Packet_Send(uint8_t *src, uint32_t size) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, src, size);
 
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+  DN_Packet_DCC_ResetBPP(cmdBuf);
 #endif
 
   DN_Packet_DCC_Send(size >> 2);
@@ -387,7 +397,7 @@ void DN_Packet_Send_One(uint32_t data) {
   uint32_t checksum = DN_Calculate_CRC32(0xffffffff, (uint8_t *)&data, 4);
 
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+  DN_Packet_DCC_ResetBPP(cmdBuf);
 #endif
 
   DN_Packet_DCC_Send(1);
@@ -459,7 +469,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
   uint32_t RAW_PixCount;
   
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+  DN_Packet_DCC_ResetBPP(cmdBuf);
 #endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
@@ -526,7 +536,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
   uint32_t rawInOffset;
 
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+  DN_Packet_DCC_ResetBPP(cmdBuf);
 #endif
   DN_Packet_DCC_Send_Buffer_Reset();
 
@@ -604,7 +614,7 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
 
 void DN_Packet_WriteDirect(uint8_t *src, uint32_t size) {
 #if USE_BREAKPOINTS
-  DN_Packet_DCC_ResetBPP((uint32_t *)cmdBuf);
+  DN_Packet_DCC_ResetBPP(cmdBuf);
 #endif
   DN_Packet_DCC_Send_Buffer_Reset();
 

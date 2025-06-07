@@ -50,8 +50,8 @@ _vectors:
    .extern pic_relocate
    .global DN_Packet_DCC_WaitForBP
 #if USE_BREAKPOINTS
-   .global DN_Packet_DCC_ResetBPP
-   .global DN_Packet_DCC_Send
+   .global DCC_PKT_RW_DATA
+   .global DCC_PKT_RW_SIZE
 #endif
    .extern dcc_main
    .extern __stack_und_end
@@ -236,49 +236,6 @@ DN_Packet_DCC_WaitForBP:
    mov   r0, #0
    adr   r0, DCC_PKT_RW_DATA
    ldr   r0, [r0]
-   bx lr
-
-DN_Packet_DCC_ResetBPP:
-   mov   r2, #0
-   
-   /* Reset size */
-   mov   r1, #0
-   adr   r1, DCC_PKT_RW_SIZE
-   str   r2, [r1]
-   
-   /* Write offset data */
-   mov   r1, #0
-   adr   r1, DCC_PKT_RW_DATA
-   str   r0, [r1]
-
-   bx lr
-
-DN_Packet_DCC_Send:   
-   /* 01 - Data */
-   mov   r1, #0
-   adr   r1, DCC_PKT_RW_DATA
-   ldr   r1, [r1]
-
-   /* 02 - Size */
-   mov   r2, #0
-   adr   r2, DCC_PKT_RW_SIZE
-   ldr   r2, [r2]
-
-   /* 03 - Writing */
-   add   r1, r2
-   str   r0, [r1]
-
-   /* 04 - Increment */
-   mov   r1, #4
-   add   r2, r1
-
-   /* 05 - Update */
-   mov   r1, #0
-   adr   r1, DCC_PKT_RW_SIZE
-   str   r2, [r1]
-
-   /* 06 - End */
-   mov   r0, #1
    bx lr
 #else
 DN_Packet_DCC_WaitForBP:

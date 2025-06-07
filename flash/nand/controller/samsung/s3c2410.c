@@ -97,11 +97,11 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     NAND_Ctrl_Command_Write(NAND_CMD_READID);
     NAND_Ctrl_Address_Write(0x0);
 
-    uint16_t mfr_id = NAND_Ctrl_Data_Read();
-    uint16_t dev_id = NAND_Ctrl_Data_Read();
+    uint8_t mfr_id = (uint8_t)NAND_Ctrl_Data_Read();
+    uint8_t dev_id = (uint8_t)NAND_Ctrl_Data_Read();
 
     for (int i = 0; flash_ids[i].dev_id; i++) {
-        if (dev_id == (uint16_t)flash_ids[i].dev_id) {
+        if (dev_id == (uint8_t)flash_ids[i].dev_id) {
             mem->device_id = dev_id;
             mem->manufacturer = mfr_id;
             mem->bit_width = flash_ids[i].bits;
