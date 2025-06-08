@@ -25,6 +25,7 @@ typedef struct {
     uint32_t size;
     uint32_t nor_cmd_set;
     uint32_t base_offset;
+    uint32_t probe_error_code;
     MemTypes type;
     char name[256];
 } DCCMemory;

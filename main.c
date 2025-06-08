@@ -88,7 +88,7 @@ void dcc_main(uint32_t StartAddress, uint32_t PageSize) {
             /* When device probe fails, it goes here */
             default:
                 BUF_INIT[dcc_init_offset++] = DCC_MEM_OK | (DCC_MEM_NONE << 16);
-                BUF_INIT[dcc_init_offset++] = 0;
+                BUF_INIT[dcc_init_offset++] = mem[i].probe_error_code;
                 mem_has_spare[i] = 0;
 
         }
