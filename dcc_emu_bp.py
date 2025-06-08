@@ -36,6 +36,7 @@ def hook_code(uc: Uc, address, size, user_data):
             print("RSP3", hex(uc.reg_read(UC_ARM_REG_R2)))
             print("RSP4", hex(uc.reg_read(UC_ARM_REG_R3)))
             print("RLOC", hex(uc.reg_read(UC_ARM_REG_R9)))
+            print("RSP12", hex(uc.reg_read(UC_ARM_REG_R12)))
             print("SP", hex(uc.reg_read(UC_ARM_REG_SP)))
             print("SP_DATA", uc.mem_read(uc.reg_read(UC_ARM_REG_SP), 0x10)) 
         
@@ -52,6 +53,9 @@ def hook_code(uc: Uc, address, size, user_data):
             uc.mem_write(m_start, data_rd)
             uc.reg_write(UC_ARM_REG_PC, address + 4)
             return
+
+        #if address == 0x14003260:
+        #    uc.mem_write(0x800000, b"\x12\x34"*0x4000)
         
     except KeyboardInterrupt:
         uc.emu_stop()
