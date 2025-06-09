@@ -30,8 +30,10 @@ DCC_RETURN SuperAND_Ctrl_Probe(DCCMemory *mem) {
     wdog_reset();
     mem->type = MEMTYPE_NONE;
 
+    SuperAND_Ctrl_Wait_Ready();
     SuperAND_Ctrl_Command_Write(SUPERAND_CMD_READID);
     SuperAND_Ctrl_Address_Write(0x0);
+    SuperAND_Ctrl_Wait_Ready();
 
     uint8_t mfr_id = (uint8_t)SuperAND_Ctrl_Data_Read();
     uint8_t dev_id = (uint8_t)SuperAND_Ctrl_Data_Read();

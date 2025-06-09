@@ -111,6 +111,8 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     }
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
+    NAND_Ctrl_Wait_Ready();
+
     if (is_axi) {
         WRITE_U32(0x088ce004, READ_U32(0x088ce004) | 0x80000000);
         WRITE_U32(0x088ce004, READ_U32(0x088ce004) & ~0x40000000);
@@ -120,6 +122,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     
     NAND_Ctrl_Command_Write(NAND_CMD_READID);
     NAND_Ctrl_Address_Write(0x0);
+    NAND_Ctrl_Wait_Ready();
 
     uint8_t mfr_id = (uint8_t)NAND_Ctrl_Data_Read();
     uint8_t dev_id = (uint8_t)NAND_Ctrl_Data_Read();
@@ -174,6 +177,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     }
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
+    NAND_Ctrl_Wait_Ready();
     return DCC_OK;
 }
 

@@ -1,53 +1,56 @@
-/* Samsung S3C2410 NAND Controller */
-#include "../controller.h"
-#include "s3c2410.h"
+/* Nand controller template */
+#include "../../controller.h"
+#include "dcc/dn_dcc_proto.h"
+#include "dcc/plat.h"
 
-#ifndef NAND_BASE
-#define NAND_BASE 0x4e000000
-#endif
+uint16_t inline _get_bit16(uint32_t offset, uint32_t bit_position, uint32_t bit_mask)
+{
+    return (READ_U16(offset) >> bit_position) & bit_mask;
+}
 
-#ifndef NAND_SYS_TYPE
-#define NAND_SYS_TYPE SYSTYPE_S3C2410
-#endif
+void inline _set_bit16(uint32_t offset, uint32_t bit_position, uint32_t bit_mask, uint16_t value)
+{
+    WRITE_U16(offset, (READ_U16(offset) & ~(bit_mask << bit_position)) | ((value & bit_mask) << bit_position));
+}
 
-static uint8_t bit_width;
+uint8_t inline MSM5100_GPIO_Read(uint8_t gpio_no) {
+    return _get_bit16(0x03000720 + ((gpio_no >> 4) << 2), gpio_no & 15, 1);
+}
+
+void inline MSM5100_GPIO_Write(uint8_t gpio_no, uint8_t bit) {
+    _set_bit16(0x03000720 + ((gpio_no >> 4) << 2), gpio_no & 15, 1, bit);
+}
 
 void inline NAND_Ctrl_Command_Write(uint8_t cmd) {
     // Write command routines
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    WRITE_U16(NAND_BASE + S3C2410_NFCMD, (uint16_t)cmd);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440 || NAND_SYS_TYPE == SYSTYPE_S3C2412
-    WRITE_U16(NAND_BASE + S3C2440_2412_NFCMD, (uint16_t)cmd);
-#endif
+    wdog_reset();
+    // GPIO 29
+    MSM5100_GPIO_Write(29, 1);
+    WRITE_U16(0x00800000, cmd);
+    MSM5100_GPIO_Write(29, 0);
+
 }
 
 void inline NAND_Ctrl_Address_Write(uint8_t addr) {
     // Write address routines
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    WRITE_U16(NAND_BASE + S3C2410_NFADDR, (uint16_t)addr);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440 || NAND_SYS_TYPE == SYSTYPE_S3C2412
-    WRITE_U16(NAND_BASE + S3C2440_2412_NFADDR, (uint16_t)addr);
-#endif
+    wdog_reset();
+    // GPIO 28
+    MSM5100_GPIO_Write(28, 1);
+    WRITE_U16(0x00800000, addr);
+    MSM5100_GPIO_Write(28, 0);
+
 }
 
 uint16_t inline NAND_Ctrl_Data_Read() {
     // Data read routines
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    return bit_width == 16 ? READ_U16(NAND_BASE + S3C2410_NFDATA) : READ_U8(NAND_BASE + S3C2410_NFDATA);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440 || NAND_SYS_TYPE == SYSTYPE_S3C2412
-    return bit_width == 16 ? READ_U16(NAND_BASE + S3C2440_2412_NFDATA) : READ_U8(NAND_BASE + S3C2440_2412_NFDATA);
-#endif
+    wdog_reset();
+    return READ_U16(0x00800000);
 }
 
 void inline NAND_Ctrl_Wait_Ready() {
     // Busy assert routines
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    do { wdog_reset(); } while (!GET_BIT8(NAND_BASE + S3C2410_NFSTAT, S3C2410_NFSTAT_BUSY));
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440
-    do { wdog_reset(); } while (!GET_BIT8(NAND_BASE + S3C2440_NFSTAT, S3C2440_NFSTAT_READY));
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2412
-    do { wdog_reset(); } while (!GET_BIT8(NAND_BASE + S3C2412_NFSTAT, S3C2412_NFSTAT_READY));
-#endif
+    // GPIO 6
+    do { wdog_reset(); } while ( !MSM5100_GPIO_Read(6) );
 }
 
 uint32_t inline NAND_Ctrl_Check_Status() {
@@ -57,41 +60,6 @@ uint32_t inline NAND_Ctrl_Check_Status() {
 DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     wdog_reset();
     mem->type = MEMTYPE_NONE;
-
-    uint32_t NFCONF = 0;
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_EN, 1);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_INITECC, 0);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_NFCE, 0);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TACLS, 3);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TWRPH0, 5);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TWRPH1, 3);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440
-    uint32_t NFCONT = 0;
-
-    BIT_SET_VAR(NFCONT, S3C2440_2412_NFCONT_ENABLE, 1);
-    BIT_SET_VAR(NFCONT, S3C2440_NFCONT_NFCE, 0);
-    BIT_SET_VAR(NFCONT, S3C2440_NFCONT_INITECC, 0);
-    BIT_SET_VAR(NFCONF, S3C2440_2412_NFCONF_TACLS, 3);
-    BIT_SET_VAR(NFCONF, S3C2440_2412_NFCONF_TWRPH0, 7);
-    BIT_SET_VAR(NFCONF, S3C2440_2412_NFCONF_TWRPH1, 7);
-
-    WRITE_U32(NAND_BASE + S3C2440_2412_NFCONT, NFCONT);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2412
-    uint32_t NFCONT = 0;
-
-    BIT_SET_VAR(NFCONT, S3C2440_2412_NFCONT_ENABLE, 1);
-    BIT_SET_VAR(NFCONT, S3C2412_NFCONT_nFCE0, 0);
-    BIT_SET_VAR(NFCONT, S3C2412_NFCONT_nFCE1, 0);
-    BIT_SET_VAR(NFCONT, S3C2412_NFCONT_INIT_MAIN_ECC, 0);
-    BIT_SET_VAR(NFCONT, S3C2412_NFCONT_INIT_SECONDARY_ECC, 0);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TACLS, 3);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TWRPH0, 7);
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_TWRPH1, 7);
-
-    WRITE_U32(NAND_BASE + S3C2440_2412_NFCONT, NFCONT);
-#endif
-    WRITE_U32(NAND_BASE + S3C2410_2440_2412_NFCONF, NFCONF);
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
     NAND_Ctrl_Wait_Ready();
@@ -119,7 +87,6 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     if (mem->type != MEMTYPE_NAND) return DCC_PROBE_ERROR;
 
     if (mem->page_size == 0) {
-#if NAND_SYS_TYPE == SYSTYPE_S3C2440 || NAND_SYS_TYPE == SYSTYPE_S3C2412
         NAND_Ctrl_Data_Read();
         uint8_t extra_id = (uint8_t)NAND_Ctrl_Data_Read();
 
@@ -141,27 +108,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
         }
 
         mem->device_id |= extra_id << 8;
-#else
-        // Not supported by HW
-        mem->type = MEMTYPE_NONE;
-        return DCC_PROBE_ERROR;
-#endif
     }
-
-    bit_width = mem->bit_width;
-
-#if NAND_SYS_TYPE == SYSTYPE_S3C2410
-    BIT_SET_VAR(NFCONF, S3C2410_NFCONF_INITECC, 1);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2440
-    BIT_SET_VAR(NFCONF, S3C2440_2412_NFCONF_BUSWIDTH, bit_width == 16 ? 1 : 0);
-    BIT_SET_VAR(NFCONT, S3C2440_NFCONT_INITECC, 1);
-    WRITE_U32(NAND_BASE + S3C2440_2412_NFCONT, NFCONT);
-#elif NAND_SYS_TYPE == SYSTYPE_S3C2412
-    BIT_SET_VAR(NFCONF, S3C2440_2412_NFCONF_BUSWIDTH, bit_width == 16 ? 1 : 0);
-    BIT_SET_VAR(NFCONT, S3C2412_NFCONT_INIT_MAIN_ECC, 1);
-    WRITE_U32(NAND_BASE + S3C2440_2412_NFCONT, NFCONT);
-#endif
-    WRITE_U32(NAND_BASE + S3C2410_2440_2412_NFCONF, NFCONF);
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
     NAND_Ctrl_Wait_Ready();
