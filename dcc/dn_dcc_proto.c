@@ -693,3 +693,8 @@ uint32_t DN_Log2(uint32_t value)
     m++;
   }
 }
+
+void DN_WaitUSec(uint32_t usec)
+{
+  do { wdog_reset(); } while (usec--);
+}

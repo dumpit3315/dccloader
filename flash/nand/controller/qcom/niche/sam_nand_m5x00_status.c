@@ -1,5 +1,6 @@
 /* Nand controller template */
 #include "../../controller.h"
+#include "dcc/dn_dcc_proto.h"
 #include "dcc/plat.h"
 
 #ifndef NAND_ADDR
@@ -43,11 +44,11 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     mem->type = MEMTYPE_NONE;
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
-    NAND_Ctrl_Wait_Ready();
+    DN_WaitUSec(600);
 
     NAND_Ctrl_Command_Write(NAND_CMD_READID);
     NAND_Ctrl_Address_Write(0x0);
-    NAND_Ctrl_Wait_Ready();
+    DN_WaitUSec(100);
 
     uint8_t mfr_id = (uint8_t)NAND_Ctrl_Data_Read();
     uint8_t dev_id = (uint8_t)NAND_Ctrl_Data_Read();
@@ -92,7 +93,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     }
 
     NAND_Ctrl_Command_Write(NAND_CMD_RESET);
-    NAND_Ctrl_Wait_Ready();
+    DN_WaitUSec(600);
     return DCC_OK;
 }
 

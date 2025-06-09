@@ -140,6 +140,7 @@ void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
 void DN_Packet_Read(uint8_t *dest, uint32_t size);
 uint32_t DN_Log2(uint32_t value);
+void DN_WaitUSec(uint32_t usec);
 void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size);
 void DN_Packet_WriteDirect(uint8_t *src, uint32_t size);
 void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size);
