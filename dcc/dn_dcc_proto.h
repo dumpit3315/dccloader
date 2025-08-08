@@ -109,7 +109,7 @@ typedef struct {
 #define DCC_INVALID_ARGS   0x23 // Invalid arguments
 #define DCC_ERASE_ERROR    0x24 // Erase error
 #define DCC_PROGRAM_ERROR  0x25 // Write error
-#define DCC_PROBE_ERROR    0x26 // Device probe failed
+#define DCC_PROBE_ERROR    0x26 // Flash device is unknown/Detection failed
 #define DCC_R_ASSERT_ERROR 0x27 // Ready flag timeout during read
 #define DCC_READ_ERROR     0x28 // Read error
 #define DCC_W_ASSERT_ERROR 0x2A // Ready flag timeout during write

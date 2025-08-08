@@ -5,7 +5,7 @@
 #include "pxa312.h"
 
 #define PXA3_CMD(cmd, cmd_type, addr_c) (cmd | (cmd_type << PXA3_NDCB_CMD_TYPE.bit_pos) | (addr_c << PXA3_NDCB_ADDR_CYC.bit_pos))
-#define PXA3_CMD_DBC(cmd1, cmd2, cmd_type, addr_c) (cmd1 | (cmd2 << 8) | (cmd_type << PXA3_NDCB_CMD_TYPE.bit_pos) | (addr_c << PXA3_NDCB_ADDR_CYC.bit_pos) | (1 << PXA3_NDCB_DBC.bit_pos))
+#define PXA3_CMD_DBC(cmd1, cmd2, cmd_type, addr_c) (cmd1 | (cmd2 << PXA3_NDCB_CMD2.bit_pos) | (cmd_type << PXA3_NDCB_CMD_TYPE.bit_pos) | (addr_c << PXA3_NDCB_ADDR_CYC.bit_pos) | (1 << PXA3_NDCB_DBC.bit_pos))
 
 
 void inline PXA3_Start() {

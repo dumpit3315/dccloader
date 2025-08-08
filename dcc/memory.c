@@ -9,7 +9,9 @@ void *memcpy(void *dst, const void *src, size_t len)
 	char *d = dst;
 
 	while (len--) {
-        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
+        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) 
+			wdog_reset();
+		
 		*d++ = *s++;
     }
 
@@ -35,8 +37,11 @@ void *memmove(void *dst, const void *src, size_t len)
 		const char *s = (const char *)src + len;
 		char *d = (char *)dst + len;
 		while (d != end) {
-            if (((size_t)d & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
+            if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) 
+				wdog_reset();
+
 			*--d = *--s;
+			len--;
         }
 	}
 	return dst;
@@ -50,7 +55,9 @@ int memcmp(const void *s1, const void *s2, size_t len)
 	unsigned char dc;
 
 	while (len--) {
-        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER) wdog_reset();
+        if ((len & MEMORY_WDOG_COUNTER) == MEMORY_WDOG_COUNTER)
+			wdog_reset();
+
 		sc = *s++;
 		dc = *d++;
 		if (sc - dc)
