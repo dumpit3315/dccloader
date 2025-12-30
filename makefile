@@ -182,7 +182,7 @@ LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingl
 #
 
 ifeq ($(PLATFORM), default)
-$(warning Building without platform specific routines, specify PLATFORM= to change that)
+$(warning Building without platform specific routines, specify PLATFORM to change that)
 endif
 
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
@@ -225,27 +225,27 @@ else
 	@echo > /dev/null
 endif
 	$(info Dumpnow DCC Loader)
-	$(info 	Optional libraries:)
-	$(info 	LZO=1 = Enable LZO Compression)
-	$(info 	LZ4=1 = Enable LZ4 Compression)
-	$(info 	LWMEM=1 = Enable LWMEM memory management)
-	$(info 	Target configuration:)
-	$(info 	PLATFORM=(name) Select chipset platform)
-	$(info 	MCU=(MCU) = Select CPU architecture)
-	$(info 	ICACHE=1 = Use instruction cache (ARM9 and later))
-	$(info 	BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help)
-	$(info 	BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
-	$(info 	PROJECT=(name) = Output name)
-	$(info 	LDSCRIPT=(ld) = Linker script)
-	$(info 	NEW_IO=1 = Use new DCC IO routines, RLE currently doesn't work in RIFF)
-	$(info 	NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
-	$(info 	BIG_ENDIAN=1 = Big endian format)
-	$(info 	Flash devices:)
-	$(info 	CFI=1 = Enable CFI interface)
-	$(info 	NAND_CONTROLLER=(name) = Enable NAND controller)
-	$(info 	ONENAND_CONTROLLER=(name) = Enable OneNAND controller)
-	$(info 	SUPERAND_CONTROLLER=(name) = Enable SuperAND controller)
-	$(info 	LOADER_DEVICES=(name) = Select which memory combination to use)
+	$(info Optional libraries:)
+	$(info $(NULL)  LZO=1 = Enable LZO Compression)
+	$(info $(NULL)  LZ4=1 = Enable LZ4 Compression)
+	$(info $(NULL)  LWMEM=1 = Enable LWMEM memory management)
+	$(info Target configuration:)
+	$(info $(NULL)  PLATFORM=(name) Select chipset platform)
+	$(info $(NULL)  MCU=(MCU) = Select CPU architecture)
+	$(info $(NULL)  ICACHE=1 = Use instruction cache (ARM9 and later))
+	$(info $(NULL)  BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help)
+	$(info $(NULL)  BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
+	$(info $(NULL)  PROJECT=(name) = Output name)
+	$(info $(NULL)  LDSCRIPT=(ld) = Linker script)
+	$(info $(NULL)  NEW_IO=1 = Use new DCC IO routines, RLE currently doesn't work in RIFF)
+	$(info $(NULL)  NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
+	$(info $(NULL)  BIG_ENDIAN=1 = Big endian format)
+	$(info Flash devices:)
+	$(info $(NULL)  CFI=1 = Enable CFI interface)
+	$(info $(NULL)  NAND_CONTROLLER=(name) = Enable NAND controller)
+	$(info $(NULL)  ONENAND_CONTROLLER=(name) = Enable OneNAND controller)
+	$(info $(NULL)  SUPERAND_CONTROLLER=(name) = Enable SuperAND controller)
+	$(info $(NULL)  LOADER_DEVICES=(name) = Select which memory combination to use)
 
 #
 # Include the dependency files, should be the last of the makefile
