@@ -3,7 +3,7 @@
 #include "devices.h"
 
 #ifdef CDEFS
-const char CFLAGS[] = "C:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;
+const char CFLAGS[] = "C:DumpNow DCC Loader. (c) 2026 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;
 #endif
 
 static uint8_t rawBuf[DCC_BUFFER_SIZE + 0x2000];

@@ -28,7 +28,6 @@ void inline NAND_Ctrl_Command_Write(uint8_t cmd) {
     MSM5100_GPIO_Write(28, 1);
     WRITE_U16(0x02c00000, cmd);
     MSM5100_GPIO_Write(28, 0);
-
 }
 
 void inline NAND_Ctrl_Address_Write(uint8_t addr) {
@@ -38,7 +37,6 @@ void inline NAND_Ctrl_Address_Write(uint8_t addr) {
     MSM5100_GPIO_Write(29, 1);
     WRITE_U16(0x02c00000, addr);
     MSM5100_GPIO_Write(29, 0);
-
 }
 
 uint16_t inline NAND_Ctrl_Data_Read() {

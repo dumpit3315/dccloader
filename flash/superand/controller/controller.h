@@ -9,7 +9,7 @@ typedef struct {
 	uint32_t bits;
 } superand_info;
 
-extern superand_info flash_ids[];
+extern const superand_info flash_ids[];
 
 typedef enum {
 	SUPERAND_CMD_READ = 0x0,

@@ -35,7 +35,7 @@ void inline RunCommand(uint32_t cmd) {
     do { wdog_reset(); } while (READ_U32(INTERRUPT_READ) & INTERRUPT_CLEAR_VALUE);
 
     WRITE_U32(REGS_START + MSM6250_REG_FLASH_CMD, cmd);
-    do { wdog_reset(); } while ((READ_U32(INTERRUPT_READ) & INTERRUPT_ASSERT_VALUE) == 0);
+    do { wdog_reset(); } while (!(READ_U32(INTERRUPT_READ) & INTERRUPT_ASSERT_VALUE));
 }
 
 DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
@@ -81,7 +81,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     nand_config = 0x25a;
 #endif
 
-    BIT_SET_VAR(nand_config, MSM6250_CONFIG_ECC_DISABLED, 0);
+    BIT_SET_VAR(nand_config, MSM6250_CONFIG_ECC_DISABLED, 1); // use fixdump.py in EFS2 tools instead (FTL compatibility)
     WRITE_U32(REGS_START + MSM6250_REG_FLASH_CFG1, nand_config);
 #if IS_MSM6550
     WRITE_U32(REGS_START + MSM6250_REG_FLASH_SPARE_DATA, mem->bit_width == 16 ? 0x06719C63 : 0x06541463);

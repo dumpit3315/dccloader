@@ -113,7 +113,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
 
     SET_BIT32(PXA3_REG_NDCR, PXA3_NDCR_DWIDTH_C, mem->bit_width == 16 ? 1 : 0);
     SET_BIT32(PXA3_REG_NDCR, PXA3_NDCR_DWIDTH_M, mem->bit_width == 16 ? 1 : 0);
-    SET_BIT32(PXA3_REG_NDCR, PXA3_NDCR_ECC_EN, 1);
+    SET_BIT32(PXA3_REG_NDCR, PXA3_NDCR_ECC_EN, 1); // idk if PXA3 devices have SW FTL solution
 
     PXA3_Start();
     PXA3_NAND_Reset();

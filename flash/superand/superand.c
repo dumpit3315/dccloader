@@ -2,7 +2,7 @@
 #include "controller/controller.h"
 #include "dcc/dn_dcc_proto.h"
 
-superand_info flash_ids[] = {
+const superand_info flash_ids[] = {
     /* 16MB */
     {0x51, 0x200, 0x01000000, 0x4000, 8},
     {0x52, 0x200, 0x01000000, 0x4000, 8},

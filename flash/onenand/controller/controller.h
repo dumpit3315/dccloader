@@ -59,7 +59,13 @@
 #define O1N_CMD_PI_ACCESS 0x66
 #define O1N_CMD_RECOVER_LSB 0x05
 
+// Single register R/W
+int OneNAND_Ctrl_Wait_Ready(DCCMemory *mem, uint16_t flag);
 void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset);
-void OneNAND_Ctrl_Reg_Write(DCCMemory *mem, uint16_t reg, uint16_t data);
+void OneNAND_Ctrl_Reg_Write(DCCMemory *mem, uint16_t reg, uint16_t data, uint8_t wait_interrupt);
 uint16_t OneNAND_Ctrl_Reg_Read(DCCMemory *mem, uint16_t reg);
 void OneNAND_Ctrl_Get_Data(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page_size, uint32_t spare_size);
+
+// Multi register write queue
+void OneNAND_Ctrl_Reg_Write_Queue(DCCMemory *mem, uint16_t reg, uint16_t data);
+int OneNAND_Ctrl_Execute_Queue(uint8_t wait_interrupt);

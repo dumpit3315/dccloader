@@ -150,6 +150,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
 
     bit_width = mem->bit_width;
 
+    // TODO: whether XSR uses SW ECC
 #if NAND_SYS_TYPE == SYSTYPE_S3C2410
     BIT_SET_VAR(NFCONF, S3C2410_NFCONF_INITECC, 1);
 #elif NAND_SYS_TYPE == SYSTYPE_S3C2440

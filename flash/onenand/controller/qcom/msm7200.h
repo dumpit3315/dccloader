@@ -342,5 +342,5 @@ const bitmask MSM7200_EBI2_ECC_BUF_CFG_NUM_STEPS = {0, 0x3ff};
 
 const bitmask MSM7200_FLASH_BUFF0_ACC_BUFF_DATA = {0, 0xffffffff};
 
-const bitmask MSM7200_SFLASHC_EXEC_CMD_BUSY = {0, 0x1};
+const bitmask MSM7200_SFLASHC_DEV_INTERRUPT = {5, 0x1};
 const bitmask MSM7200_SFLASHC_OPER_STATUS = {0, 0xf};

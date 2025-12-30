@@ -33,7 +33,7 @@ void inline RunCommand(uint32_t cmd) {
     do { wdog_reset(); } while (READ_U32(INTERRUPT_READ) & INTERRUPT_CLEAR_VALUE);
 
     WRITE_U32(REGS_START + MSM6800_REG_FLASH_CMD, cmd);
-    do { wdog_reset(); } while ((READ_U32(INTERRUPT_READ) & INTERRUPT_ASSERT_VALUE) == 0);
+    do { wdog_reset(); } while (!(READ_U32(INTERRUPT_READ) & INTERRUPT_ASSERT_VALUE));
 }
 
 DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
@@ -111,7 +111,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
         mem->device_id |= ext_id << 8;
     }
 
-    BIT_SET_VAR(nand_config_1, MSM6800_CONFIG1_ECC_DISABLED, 0);
+    BIT_SET_VAR(nand_config_1, MSM6800_CONFIG1_ECC_DISABLED, 1); // use fixdump.py in EFS2 tools instead (FTL compatibility)
     WRITE_U32(REGS_START + MSM6800_REG_FLASH_CFG1_FLASH1, nand_config_1);
 
     RunCommand(MSM6800_CMD_FLASH_RESET);

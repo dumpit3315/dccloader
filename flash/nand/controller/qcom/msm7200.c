@@ -75,6 +75,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
 
     RunCommand(MSM7200_CMD_FETCH_ID);
 
+    // Formatted as 0xadba1055 => 0x5510baad
     uint32_t nand_idcode = READ_U32(REGS_START + MSM7200_REG_READ_ID);
     uint8_t mfr_id = (uint8_t)nand_idcode;
     uint8_t dev_id = (uint8_t)(nand_idcode >> 8);
@@ -120,7 +121,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     BIT_SET_VAR(nand_config_2, MSM7200_NAND_DEV_CFG1_WIDE_FLASH, mem->bit_width >> 4);
     BIT_SET_VAR(nand_config_2, MSM7200_NAND_DEV_CFG1_BAD_BLOCK_IN_SPARE_AREA, mem->page_size <= 0x200);
     BIT_SET_VAR(nand_config_2, MSM7200_NAND_DEV_CFG1_BAD_BLOCK_BYTE_NUM, mem->page_size <= 0x200 ? (mem->bit_width == 16 ? 1 : 6) : 0x1d1);
-    BIT_SET_VAR(nand_config_2, MSM7200_NAND_DEV_CFG1_ECC_DISABLE, 0);
+    BIT_SET_VAR(nand_config_2, MSM7200_NAND_DEV_CFG1_ECC_DISABLE, 1); // use fixdump.py in EFS2 tools instead (FTL compatibility)
 
     WRITE_U32(REGS_START + MSM7200_REG_DEV0_CFG0, nand_config_1);
     WRITE_U32(REGS_START + MSM7200_REG_DEV0_CFG1, nand_config_2);

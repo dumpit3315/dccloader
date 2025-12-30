@@ -2,30 +2,9 @@
 #include "dcc/dn_dcc_proto.h"
 #include "controller/controller.h"
 
-int OneNAND_Ctrl_Wait_Ready(DCCMemory *mem, uint16_t flag) {
-    // Busy assert routines
-    int timeout = 0x10000;
-
-    do {
-        wdog_reset();
-        if (timeout == 0) return 0;
-        timeout--;
-    } while ((OneNAND_Ctrl_Reg_Read(mem, O1N_REG_INTERRUPT) & flag) != flag);
-
-    return 1;
-}
-
 uint32_t OneNAND_Probe(DCCMemory *mem, uint32_t offset) {
     wdog_reset();
     OneNAND_Pre_Initialize(mem, offset);
-    
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_SYS_CFG1, 0x40c0);
-
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_ADDRESS1, 0x0);
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_ADDRESS2, 0x0);
-
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_INTERRUPT, 0x0);
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_COMMAND, O1N_CMD_HOT_RESET);
 
     if (!OneNAND_Ctrl_Wait_Ready(mem, 0x8000)) return DCC_PROBE_ERROR;
 
@@ -47,20 +26,21 @@ uint32_t OneNAND_Probe(DCCMemory *mem, uint32_t offset) {
 
 uint32_t OneNAND_Read_Upper(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page) {
     wdog_reset();
-    
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_INTERRUPT, 0x0);
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_ECC_STATUS, 0x0);
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_BUFFER, (8 << 8)); // First DataRAM
+    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_ECC_STATUS, 0x0, 0);
 
-    uint32_t density = 2 << ((mem->page_size == 4096 ? 4 : 3) + ((mem->device_id >> 4) & 0xf));        
+    uint32_t density = 2 << ((mem->page_size == 4096 ? 4 : 3) + ((mem->device_id >> 4) & 0xf));
     uint32_t addr1_mask = ((mem->device_id & 8) ? (density << 2) : (density << 3)) - 1;
     uint32_t ddp_access = (mem->device_id & 8) && ((page >> 6) >= (density << 2));
 
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_ADDRESS1, (ddp_access ? 0x8000 : 0) | ((page >> 6) & addr1_mask));
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_ADDRESS2, ddp_access ? 0x8000 : 0);
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_START_ADDRESS8, (page & 63) << 2);
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_ADDRESS8, (page & 63) << 2);
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_ADDRESS1, (ddp_access ? 0x8000 : 0) | ((page >> 6) & addr1_mask));
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_ADDRESS2, ddp_access ? 0x8000 : 0);
 
-    OneNAND_Ctrl_Reg_Write(mem, O1N_REG_COMMAND, O1N_CMD_READ);
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_BUFFER, (8 << 8)); // First DataRAM
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_INTERRUPT, 0x0);
+    OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_COMMAND, O1N_CMD_READ);
+    
+    if (!OneNAND_Ctrl_Execute_Queue(0)) return DCC_R_ASSERT_ERROR;
     if (!OneNAND_Ctrl_Wait_Ready(mem, 0x8080)) return DCC_R_ASSERT_ERROR;
 
     OneNAND_Ctrl_Get_Data(mem, page_buf, spare_buf, mem->page_size, mem->page_size >> 5);

@@ -78,7 +78,7 @@ CrashHandler:
 
 .word __heap_size
 .word __stack_end
-.asciz "A:DumpNow DCC Loader. (c) 2025 Wrapper.;Compile flags: " ADEFS ";Compile Date: " __DATE__
+.asciz "A:DumpNow DCC Loader. (c) 2026 Wrapper.;Compile flags: " ADEFS ";Compile Date: " __DATE__
 .align
 
 /* LWMEM info */
