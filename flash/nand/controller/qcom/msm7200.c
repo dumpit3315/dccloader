@@ -132,6 +132,7 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
     return DCC_OK;
 }
 
+#if 1
 DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page) {
     wdog_reset();
 
@@ -143,3 +144,20 @@ DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf,
 
     return DCC_OK;
 }
+#else
+/* Alternate version translated from VM265 loader */
+DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page) {
+    wdog_reset();
+
+    WRITE_U32(REGS_START + MSM7200_REG_ADDR0, (mem->page_size > 0x200 ? page << 16 : page << 8));
+    WRITE_U32(REGS_START + MSM7200_REG_ADDR1, (mem->page_size > 0x200 ? page >> 16 : page >> 24));
+
+    for (int i = 0; i < (mem->page_size >> 9); i++) {
+        RunCommand(MSM7200_CMD_PAGE_READ_ALL);
+        PLAT_MEMCPY(page_buf + (i << 9), (uint8_t *)(REGS_START + MSM7200_REG_FLASH_BUFFER), 0x200);
+        PLAT_MEMCPY(spare_buf + (i << 4), (uint8_t *)(REGS_START + MSM7200_REG_FLASH_BUFFER + 0x200), 0x10);
+    }
+
+    return DCC_OK;
+}
+#endif

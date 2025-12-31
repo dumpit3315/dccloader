@@ -99,6 +99,10 @@ if __name__ == "__main__":
         elif cmd == -65536:
             print(f"{cmd}: {f.read(8)}")
 
+        elif cmd == -6:
+            value, mask, offset, a1, a2, a3, a4 = struct.unpack("<LLLLLLL", f.read(0x1c))
+            print(f"{cmd} (UNK): v:{hex(value)}, m:{hex(mask)}, o:{hex(offset)}, a1:{hex(a1)}, a2:{hex(a2)}, a3:{hex(a3)}, a4:{hex(a4)}")
+
 
         else:
             raise Exception(f"command {cmd} {hex(f.tell() - 4)}")
