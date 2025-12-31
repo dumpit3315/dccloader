@@ -86,34 +86,25 @@ uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len)
 }
 
 /* 02 - Compress */
-void DN_RLE_FindMatch(uint8_t *src,uint32_t *RAW_Count,uint32_t *RLE_Count,uint32_t size)
+void DN_RLE_FindMatch(uint8_t *src, uint32_t *RAW_Count, uint32_t *RLE_Count, uint32_t size)
 {
-  uint8_t first;
-  uint8_t second;
   uint32_t pReadOffset = 0;
-  uint32_t rawCount = 0;
   uint32_t runCount = 1;
-  uint32_t pReadSize = 0x7fff;
-
-  if (size < 0x7fff) {
-    pReadSize = size;
-  }
+  uint32_t pReadSize = size < 0x7fff ? size : 0x7fff;
+  uint32_t rawCount = 0;
+  
 
   while (pReadOffset < (pReadSize - 1)) {
     wdog_reset();
-
-    first = src[pReadOffset];
-    second = src[pReadOffset + 1];
-    pReadOffset++;
-
-    if (first == second) {
+    if (src[pReadOffset] == src[pReadOffset + 1]) {
       runCount++;
     }
     else {
       if (4 < runCount) break;
+      rawCount = pReadOffset + 1;
       runCount = 1;
-      rawCount = pReadOffset;
     }
+    pReadOffset++;
   }
 
   *RAW_Count = rawCount;
@@ -133,26 +124,19 @@ uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest)
     wdog_reset();
     DN_RLE_FindMatch(src + inOffset,&RAW_PixCount,&RLE_PixCount,size - inOffset);
     if (RAW_PixCount != 0) {
-      // memcpy(dest + outOffset, &RAW_PixCount, 2);
       dest[outOffset] = RAW_PixCount & 0xff;
       dest[outOffset + 1] = RAW_PixCount >> 8;
-
-      memcpy(dest + outOffset + 2,src + inOffset,RAW_PixCount);
-
+      memcpy(dest + outOffset + 2, src + inOffset, RAW_PixCount);
       outOffset += RAW_PixCount + 2;
       inOffset += RAW_PixCount;
     }
-    
     if (RLE_PixCount != 0) {
-      RLE_PixCount |= 0x8000;
-
-      // memcpy(dest + outOffset, &RLE_PixCount, 2);
       dest[outOffset] = RLE_PixCount & 0xff;
-      dest[outOffset + 1] = RLE_PixCount >> 8;
+      dest[outOffset + 1] = (RLE_PixCount | 0x8000) >> 8;
       dest[outOffset + 2] = src[inOffset];
-
-      outOffset += 3;
       inOffset += RLE_PixCount & 0x7fff;
+      outOffset += 3;
+      RLE_PixCount |= 0x8000;
     }
   }
 
@@ -499,21 +483,16 @@ void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size) {
     wdog_reset();
     DN_RLE_FindMatch(src + inOffset,&RAW_PixCount,&RLE_PixCount,size - inOffset);
     if (RAW_PixCount != 0) {
-      // memcpy(dest + outOffset, &RAW_PixCount, 2);
       DN_Packet_DCC_Send_Buffer16(RAW_PixCount);
       DN_Packet_DCC_Send_Buffer8_Multi(src + inOffset, RAW_PixCount);
-
       inOffset += RAW_PixCount;
     }
     
     if (RLE_PixCount != 0) {
-      RLE_PixCount |= 0x8000;
-
-      // memcpy(dest + outOffset, &RLE_PixCount, 2);
-      DN_Packet_DCC_Send_Buffer16(RLE_PixCount);
+      DN_Packet_DCC_Send_Buffer16(RLE_PixCount | 0x8000);
       DN_Packet_DCC_Send_Buffer8(src[inOffset]);
-
       inOffset += RLE_PixCount & 0x7fff;
+      RLE_PixCount |= 0x8000;
     }
   }
 
