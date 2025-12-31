@@ -96,7 +96,8 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
 DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page) {
     wdog_reset();
     
-    SET_BIT32(REGS_START + MSM6250_REG_FLASH_ADDR, MSM6250_ADDR_FLASH_PAGE_ADDRESS, page);
+    // SET_BIT32(REGS_START + MSM6250_REG_FLASH_ADDR, MSM6250_ADDR_FLASH_PAGE_ADDRESS, page);
+    WRITE_U32(REGS_START + MSM6250_REG_FLASH_ADDR, page << 9);
     RunCommand(MSM6250_CMD_FLASH_PAGE_READ);
 
     PLAT_MEMCPY(page_buf, (uint8_t *)(REGS_START + MSM6250_REG_FLASH_BUFFER), 0x200);

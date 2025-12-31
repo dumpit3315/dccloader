@@ -1,5 +1,5 @@
 // Broadcomm BCM21xxx NAND Controller
-// Found in Samsung GT-S7070
+// Found in Samsung GT-S7070/GT-S5230
 #include "../controller.h"
 #include "bcm2133.h"
 

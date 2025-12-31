@@ -123,7 +123,8 @@ DCC_RETURN NAND_Ctrl_Probe(DCCMemory *mem) {
 DCC_RETURN NAND_Ctrl_Read(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page) {
     wdog_reset();
     
-    SET_BIT32(REGS_START + MSM6800_REG_FLASH_ADDR, MSM6800_ADDR_FLASH_PAGE_ADDRESS, page);
+    // SET_BIT32(REGS_START + MSM6800_REG_FLASH_ADDR, MSM6800_ADDR_FLASH_PAGE_ADDRESS, page);
+    WRITE_U32(REGS_START + MSM6800_REG_FLASH_ADDR, page << 9);
 
     for (int i = 0; i < (mem->page_size >> 9); i++) {
         RunCommand(MSM6800_CMD_FLASH_PAGE_READ);
