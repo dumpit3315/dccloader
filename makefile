@@ -201,6 +201,7 @@ endif
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
+	@mkdir -p $(@D)
 	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o build/$@
 
 %hex: %elf
