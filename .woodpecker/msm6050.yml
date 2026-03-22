@@ -3,15 +3,24 @@ when:
     branch: reboot
 
 steps:
-  - name: deps
-    image: debian
-    commands:
-      - apt update
-      - apt install -y gcc-arm-none-eabi binutils-arm-none-eabi python3 make
-
   - name: build
     image: debian
-    depends_on: 
-      - deps
     commands:
-      - make -B PYTHON=python3 LOADER_LOAD_START=0x14000000 LOADER_LOAD_SIZE_KB=256 BUFFER_SIZE=0x10000 CFI=1 BP_LOADER=1 LOADER_DEVICES=qcom/msm6050_2x8 PLATFORM=qcom/msm6050 PROJECT=msm6050_2x32mb_nor_bp_loader
+      - alias python=python3
+      - apt update
+      - apt install -y gcc-arm-none-eabi binutils-arm-none-eabi python3 make
+      - make -B LOADER_LOAD_START=0x14000000 LOADER_LOAD_SIZE_KB=256 BUFFER_SIZE=0x10000 CFI=1 BP_LOADER=1 LOADER_DEVICES=qcom/msm6050_2x8 PLATFORM=qcom/msm6050 PROJECT=msm6050_2x32mb_nor_bp_loader
+
+  - name: upload
+    image: docker.io/woodpeckerci/plugin-s3
+    settings:
+      bucket: dumpnow
+      access_key:
+        from_secret: s3_access_key
+      secret_key:
+        from_secret: s3_access_secret
+      source: build/*.bin
+      target: /
+      path_style: true
+      endpoint: 
+        from_secret: s3_server
