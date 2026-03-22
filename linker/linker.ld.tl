@@ -29,7 +29,7 @@ PHDRS
 
 MEMORY
 {
-  ram : org = 0x00000000, len = 512k
+  ram : org = ${DCC_LOAD_OFFSET}, len = ${DCC_MEMORY_SIZE_KB}k
 }
 
 /*

@@ -44,7 +44,7 @@ const uint32_t gpio_mask_index[4] = {0xffffffff, 0xffffffff, 0xffffffff, 0xfffff
 const uint32_t gpio_mask_index[3] = {0x1f801fe, 0xffffe1c0, 0x3fff};
 #endif
 
-inline void plat_gpio_get_base(uint32_t pin, uint32_t reg_offset, uint32_t *reg_conv_offset, uint32_t *reg_mask) {
+static inline void plat_gpio_get_base(uint32_t pin, uint32_t reg_offset, uint32_t *reg_conv_offset, uint32_t *reg_mask) {
     uint32_t pin_bit_offset = pin & 0x1f;
     uint32_t mask_index = pin >> 5;
     uint32_t base_offset = (gpio_mask_index[mask_index] & (1 << pin_bit_offset)) ? GPIO1_OFFSET : GPIO2_OFFSET; // 1 - GPIO1, 0 - GPIO2

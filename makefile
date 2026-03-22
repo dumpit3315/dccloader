@@ -2,6 +2,7 @@
 # Start of default section
 #
 
+# Tools
 TRGT = arm-none-eabi-
 CC   = $(TRGT)gcc 
 CP   = $(TRGT)objcopy
@@ -9,8 +10,7 @@ AS   = $(TRGT)gcc -x assembler-with-cpp
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
 OBJDUMP = $(TRGT)objdump
-
-MCU  = arm7tdmi
+PYTHON = python
 
 # List all default C defines here, like -D_DEBUG=1
 DDEFS =
@@ -38,8 +38,9 @@ DLIBS =
 # Define project name here
 PROJECT = dumpnow
 
-# Define linker script file here
-LDSCRIPT = linker/ram.ld
+# Auto LD script stuff
+LOADER_LOAD_START = 0x00000000
+LOADER_LOAD_SIZE_KB = 512
 
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
@@ -47,14 +48,24 @@ UDEFS =
 # Define ASM defines here
 UADEFS =
 
-# List C source files here
+# CPU type
+MCU = arm7tdmi
+
+# Target platform
+PLATFORM = default
+
+# Storage devices for the target platform
+LOADER_DEVICES = default
+
+# Define optimisation level here
+OPT = -O2
+
+# Dependencies
 DEVICES = flash/mmap/mmap.c
 CONTROLLERS = 
 ADD_DEPS = 
-PLATFORM = default
-LOADER_DEVICES = default
 
-# Additional deps
+# Optional dependencies
 ifeq ($(LZO), 1)
 ADD_DEPS += minilzo/minilzo.c
 DDEFS += -DHAVE_MINILZO=1
@@ -65,7 +76,7 @@ ADD_DEPS += lz4/lz4_fs.c
 DDEFS += -DHAVE_LZ4=1
 endif
 
-# Devices
+# Storage devices
 ifeq ($(CFI), 1)
 DEVICES += flash/cfi/cfi.c
 endif
@@ -85,7 +96,7 @@ DEVICES += flash/superand/superand.c
 CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
 endif
 
-# Configuration
+# Loader configuration
 ifeq ($(MCU), xscale)
 DDEFS += -DCPU_XSCALE
 DADEFS += -DCPU_XSCALE
@@ -115,6 +126,7 @@ DADEFS += -DUSE_PIC
 ADD_DEPS += dcc/pic.c
 endif
 
+# List C source files here
 SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
@@ -129,19 +141,15 @@ ULIBDIR =
 # List all user libraries here
 ULIBS =
 
-# Define optimisation level here
-OPT = -O2
-
 #
 # End of user defines
 ##############################################################################################
-
 
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
 DEFS    = $(DDEFS) $(UDEFS) -DCDEFS="\"FLAGS=$(DDEFS) $(UDEFS) CPU=$(MCU) PLATFORM=$(PLATFORM) LOADER_DEVICES=$(LOADER_DEVICES) DEVICES=$(DEVICES) CONTROLLERS=$(CONTROLLERS)\""
 ADEFS   = $(DADEFS) $(UADEFS) -DADEFS="\"FLAGS=$(DADEFS) $(UADEFS) CPU=$(MCU)\""
-OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
+OBJS    = $(ASRC:%.s=.out/%.o) $(SRC:%.c=.out/%.o)
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
 CC_PIC 	= 
@@ -173,12 +181,23 @@ ifeq ($(PLATFORM), default)
 $(warning Building without platform specific routines, specify PLATFORM to change that)
 endif
 
+ifndef LDSCRIPT
+LDSCRIPT = linker/linker.ld
+all: $(LDSCRIPT) $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
+else
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
+endif
 
-%.o : %.c
+%.ld : %.ld.tl
+	$(info Generating linker script with offset: $(LOADER_LOAD_START); size: $(LOADER_LOAD_SIZE_KB)k)
+	$(PYTHON) "utils/substitute.py" $< $@ $(LOADER_LOAD_START) $(LOADER_LOAD_SIZE_KB)
+
+.out/%.o : %.c
+	@mkdir -p $(@D)
 	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
-%.o : %.s
+.out/%.o : %.s
+	@mkdir -p $(@D)
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
@@ -221,12 +240,14 @@ endif
 	$(info $(NULL)  MCU=(MCU) = Select CPU architecture)
 	$(info $(NULL)  ICACHE=1 = Use instruction cache (ARM9 and later))
 	$(info $(NULL)  BP_LOADER=1 = If the chipset have broken DCC Support, compiling as Breakpoint-based loader might help)
-	$(info $(NULL)  BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
+	$(info $(NULL)  BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x4000))
 	$(info $(NULL)  PROJECT=(name) = Output name)
 	$(info $(NULL)  LDSCRIPT=(ld) = Linker script)
 	$(info $(NULL)  NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
 	$(info $(NULL)  BIG_ENDIAN=1 = Big endian format)
 	$(info $(NULL)  PIC=1 = Use PIC code)
+	$(info $(NULL)  LOADER_LOAD_START=(LOAD_OFFSET_IN_HEX) = With LDSCRIPT unset, set loader start offset)
+	$(info $(NULL)  LOADER_LOAD_SIZE_KB=(LOAD_SIZE_IN_KB) = With LDSCRIPT unset, set RAM size for the loader)
 	$(info Flash devices:)
 	$(info $(NULL)  CFI=1 = Enable CFI interface)
 	$(info $(NULL)  NAND_CONTROLLER=(name) = Enable NAND controller)

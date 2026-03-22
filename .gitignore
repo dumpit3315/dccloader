@@ -18,3 +18,5 @@ test_emu/
 *.pyc
 dcc_test.py
 old_stuff/
+linker/linker.ld
+.out/

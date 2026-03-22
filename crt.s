@@ -54,7 +54,7 @@ _vectors:
    .global DCC_PKT_RW_SIZE
 #endif
 
-#ifdef PIC
+#ifdef USE_PIC
    .extern pic_relocate
 #endif
 
@@ -85,7 +85,7 @@ CrashHandler:
 
 /* DCC info */
 .ascii "DNDL"
-#ifdef PIC
+#ifdef USE_PIC
 .word 1
 #else
 .word 0
@@ -127,20 +127,20 @@ ResetHandler:
 #endif
 
    /* 01 - Initialize stack section */
-#ifdef PIC
+#ifdef USE_PIC
    mov   r0, #0
    adr   r0, _vectors
 #endif
 
    ldr   sp, =__stack_svc_end
-#ifdef PIC
+#ifdef USE_PIC
    add   sp, r0
 #endif
 
    bl plat_init
 
    /* 02 - Reset memory */
-#ifdef PIC
+#ifdef USE_PIC
    mov   r0, #0
    adr   r0, _vectors
 #endif
@@ -152,7 +152,7 @@ ResetHandler:
    ldr   r2, =__bss_end
    mov   r3, #0
    
-#ifdef PIC
+#ifdef USE_PIC
    add   r1, r0
    add   r2, r0
 #endif
@@ -162,7 +162,7 @@ bss_clear_loop:
    bne   bss_clear_loop
 
    /* 03 - Code initialize */
-#ifdef PIC
+#ifdef USE_PIC
    mov   r0, #0
    adr   r0, _vectors
 

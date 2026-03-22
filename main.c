@@ -6,8 +6,8 @@
 const char CFLAGS[] = "C:DumpNow DCC Loader. (c) 2026 Wrapper.;Compile flags: " CDEFS ";Compile Date: " __DATE__;
 #endif
 
-#if !USE_BREAKPOINTS && !DISABLE_COMPRESS
 static uint8_t read_buffer[DCC_BUFFER_SIZE + 0x2000];
+#if !USE_BREAKPOINTS && !DISABLE_COMPRESS
 static uint8_t compress_buffer[DCC_BUFFER_SIZE + 0x4000];
 #endif
 
