@@ -11,5 +11,7 @@ steps:
 
   - name: build
     image: debian
+    depends_on: 
+      - deps
     commands:
       - make -B PYTHON=python3 LOADER_LOAD_START=0x14000000 LOADER_LOAD_SIZE_KB=256 BUFFER_SIZE=0x10000 CFI=1 BP_LOADER=1 LOADER_DEVICES=qcom/msm6050_2x8 PLATFORM=qcom/msm6050 PROJECT=msm6050_2x32mb_nor_bp_loader
