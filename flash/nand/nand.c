@@ -60,7 +60,7 @@ const nand_info flash_ids[] = {
     {0, 0, 0, 0, 0}
 };
 
-DCC_RETURN NAND_Probe(DCCMemory *mem, uint32_t offset) {
+DCC_RETURN NAND_Probe(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     return NAND_Ctrl_Probe(mem);
 }
 

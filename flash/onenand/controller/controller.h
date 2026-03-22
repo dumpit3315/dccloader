@@ -61,7 +61,7 @@
 
 // Single register R/W
 int OneNAND_Ctrl_Wait_Ready(DCCMemory *mem, uint16_t flag);
-void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset);
+void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset, uint32_t page_size);
 void OneNAND_Ctrl_Reg_Write(DCCMemory *mem, uint16_t reg, uint16_t data, uint8_t wait_interrupt);
 uint16_t OneNAND_Ctrl_Reg_Read(DCCMemory *mem, uint16_t reg);
 void OneNAND_Ctrl_Get_Data(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_buf, uint32_t page_size, uint32_t spare_size);

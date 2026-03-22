@@ -14,17 +14,17 @@
 /*
  * Some defines for the program status registers
  */
-   ARM_MODE_USER  = 0x10      /* Normal User Mode                             */
-   ARM_MODE_FIQ   = 0x11      /* FIQ Fast Interrupts Mode                     */
-   ARM_MODE_IRQ   = 0x12      /* IRQ Standard Interrupts Mode                 */
-   ARM_MODE_SVC   = 0x13      /* Supervisor Interrupts Mode                   */
-   ARM_MODE_ABORT = 0x17      /* Abort Processing memory Faults Mode          */
-   ARM_MODE_UNDEF = 0x1B      /* Undefined Instructions Mode                  */
-   ARM_MODE_SYS   = 0x1F      /* System Running in Privileged Operating Mode  */
-   ARM_MODE_MASK  = 0x1F
+ARM_MODE_USER  = 0x10      /* Normal User Mode                             */
+ARM_MODE_FIQ   = 0x11      /* FIQ Fast Interrupts Mode                     */
+ARM_MODE_IRQ   = 0x12      /* IRQ Standard Interrupts Mode                 */
+ARM_MODE_SVC   = 0x13      /* Supervisor Interrupts Mode                   */
+ARM_MODE_ABORT = 0x17      /* Abort Processing memory Faults Mode          */
+ARM_MODE_UNDEF = 0x1B      /* Undefined Instructions Mode                  */
+ARM_MODE_SYS   = 0x1F      /* System Running in Privileged Operating Mode  */
+ARM_MODE_MASK  = 0x1F
 
-   I_BIT          = 0x80      /* disable IRQ when I bit is set */
-   F_BIT          = 0x40      /* disable IRQ when I bit is set */
+I_BIT          = 0x80      /* disable IRQ when I bit is set */
+F_BIT          = 0x40      /* disable IRQ when I bit is set */
 
 /****************************************************************************/
 /*               Vector table and reset entry                               */
@@ -47,12 +47,12 @@ _vectors:
 
    .global ResetHandler
    .global ExitFunction
-   .extern pic_relocate
-   .global DN_Packet_DCC_WaitForBP
 #if USE_BREAKPOINTS
+   .global DN_Packet_DCC_WaitForBP
    .global DCC_PKT_RW_DATA
    .global DCC_PKT_RW_SIZE
 #endif
+   .extern pic_relocate
    .extern dcc_main
    .extern __stack_und_end
 
@@ -60,12 +60,14 @@ _vectors:
 StartAddress:  .word 0xffffffff
 FlashSize:     .word 0x0
 PageSize:      .word 0xffffffff
+
 /* Loader via H/W BP polling */
 DCC_PKT_RW_SIZE:   .word 0xffffffff
 DCC_PKT_RW_DATA:   .word 0xffffffff
 DCC_PKT_HW_BP:     .word DN_Packet_DCC_WaitForBP
 DCC_CANWRITE:      .word 0x0
 
+/* Crash handlers */
 UndefHandler:
 SWIHandler:
 PAbortHandler:
@@ -76,20 +78,13 @@ CrashHandler:
    b CrashHandler
 .word CrashHandler
 
+/* DCC info */
+.word __heap_start
+.word __heap_end
 .word __heap_size
-.word __stack_end
+
 .asciz "A:DumpNow DCC Loader. (c) 2026 Wrapper.;Compile flags: " ADEFS ";Compile Date: " __DATE__
 .align
-
-/* LWMEM info */
-#if HAVE_LWMEM
-lwmem_init:
-   .word __heap_start
-   .word __heap_size
-lwmem_init_end:
-   .word 0x00000000
-   .word 0x00000000
-#endif
 
 /****************************************************************************/
 /*                           Reset handler                                  */
@@ -110,7 +105,7 @@ ResetHandler:
    mcr   p15, 0, r0, cr1, cr0, 0
 #endif
 
-   /* TODO: Why is this line necessary */
+   /* Needed to flush DCC read buffer */
 #if \
   ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) ) \
   || ( defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__) || defined(__ARM_ARCH_7R__) )
@@ -121,6 +116,7 @@ ResetHandler:
    mrc   p14, 0, r0, cr1, cr0, 0
 #endif
 
+   /* 01 - Initialize stack section */
    mov   r0, #0
    adr   r0, _vectors
 
@@ -129,6 +125,7 @@ ResetHandler:
 
    bl plat_init
 
+   /* 02 - Reset memory */
    mov   r0, #0
    adr   r0, _vectors
 
@@ -146,7 +143,6 @@ bss_clear_loop:
    strne r3, [r1], #+4
    bne   bss_clear_loop
 
-#if HAVE_LWMEM
    /*
     * Clear .heap section
     */
@@ -159,46 +155,16 @@ heap_clear_loop:
    cmp   r1, r2
    strne r3, [r1], #+4
    bne   heap_clear_loop
-#endif
 
-   /*
-    * Jump to main
-    */
-#if HAVE_LWMEM
-   /*
-    * Setup lwmem memory manager
-    */
-   mov   r0, #0
-   adr   r0, lwmem_init
-   ldr   r0, [r0]
-   
-   mov   r1, #0
-   adr   r1, _vectors
-
-   add   r0, r1
-
-   mov   r1, #0
-   adr   r1, lwmem_init
-
-   str   r0, [r1]
-
-   mov   r0, #0
-   adr   r0, lwmem_init
-   bl    lwmem_assignmem
-#endif
-
-   /*
-    * Start
-    */
-
-   /* Setup PIC */
+   /* 03 - Code initialize */
    mov   r0, #0
    adr   r0, _vectors
 
+   /* Setup PIC */
    ldr   r1, =_reloc_start
-   add   r1, r0
-
    ldr   r2, =_reloc_end
+
+   add   r1, r0
    add   r2, r0
 
    ldr   r3, =edata
@@ -209,7 +175,7 @@ heap_clear_loop:
    ldr   r9, =_sgot
    add   r9, r0
 
-   /* Jump to Main */
+   /* 04 - Jump to Main */
    mov   r0, #0
    adr   r0, StartAddress
    ldr   r0, [r0]

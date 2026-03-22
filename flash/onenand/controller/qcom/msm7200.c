@@ -48,10 +48,14 @@ int OneNAND_Ctrl_Wait_Ready(DCCMemory *mem, uint16_t flag) {
     return 1;
 }
 
-void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset) {
+void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     // Initialize routines
     mem->base_offset = offset;
-    mem->page_size = 0x800;
+    if (page_size != 0x800 && page_size != 0x1000) {
+        page_size = 0x800;
+    }
+
+    mem->page_size = page_size;
 
     WRITE_U32(REGS_START + MSM7200_REG_DEV0_CFG0, 0xaad4001a);
     WRITE_U32(REGS_START + MSM7200_REG_DEV0_CFG1, 0x2101bd);

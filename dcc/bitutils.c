@@ -1,4 +1,4 @@
-#include "dcc/plat.h"
+#include "plat.h"
 #include "bitutils.h"
 
 /*

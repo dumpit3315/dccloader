@@ -22,7 +22,7 @@ const superand_info flash_ids[] = {
     {0x5b, 0x200, 0x04000000, 0x4000, 16},
 };
 
-DCC_RETURN SuperAND_Probe(DCCMemory *mem, uint32_t offset) {
+DCC_RETURN SuperAND_Probe(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     return SuperAND_Ctrl_Probe(mem);
 }
 

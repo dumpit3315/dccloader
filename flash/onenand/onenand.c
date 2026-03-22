@@ -2,9 +2,9 @@
 #include "dcc/dn_dcc_proto.h"
 #include "controller/controller.h"
 
-uint32_t OneNAND_Probe(DCCMemory *mem, uint32_t offset) {
+uint32_t OneNAND_Probe(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     wdog_reset();
-    OneNAND_Pre_Initialize(mem, offset);
+    OneNAND_Pre_Initialize(mem, offset, page_size);
 
     if (!OneNAND_Ctrl_Wait_Ready(mem, 0x8000)) return DCC_PROBE_ERROR;
 
@@ -28,9 +28,9 @@ uint32_t OneNAND_Read_Upper(DCCMemory *mem, uint8_t *page_buf, uint8_t *spare_bu
     wdog_reset();
     OneNAND_Ctrl_Reg_Write(mem, O1N_REG_ECC_STATUS, 0x0, 0);
 
-    uint32_t density = 2 << ((mem->page_size == 4096 ? 4 : 3) + ((mem->device_id >> 4) & 0xf));
-    uint32_t addr1_mask = ((mem->device_id & 8) ? (density << 2) : (density << 3)) - 1;
-    uint32_t ddp_access = (mem->device_id & 8) && ((page >> 6) >= (density << 2));
+    uint32_t density_n = 2 << (3 + ((mem->device_id >> 4) & 0xf));
+    uint32_t addr1_mask = ((mem->device_id & 8) ? (density_n << 2) : (density_n << 3)) - 1;
+    uint32_t ddp_access = (mem->device_id & 8) && ((page >> 6) >= (density_n << 2));
 
     OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_ADDRESS8, (page & 63) << 2);
     OneNAND_Ctrl_Reg_Write_Queue(mem, O1N_REG_START_ADDRESS1, (ddp_access ? 0x8000 : 0) | ((page >> 6) & addr1_mask));

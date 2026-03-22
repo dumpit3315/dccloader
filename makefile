@@ -48,7 +48,6 @@ UDEFS =
 UADEFS =
 
 # List C source files here
-# SRC  = main.c dcc/dn_dcc_proto.c minilzo/minilzo.c lwmem/lwmem.c flash/cfi/cfi.c
 DEVICES = flash/mmap/mmap.c
 CONTROLLERS = 
 ADD_DEPS = 
@@ -68,15 +67,6 @@ ADD_DEPS += lz4/lz4_fs.c
 DDEFS += -DHAVE_LZ4=1
 else
 DDEFS += -DHAVE_LZ4=0
-endif
-
-ifeq ($(LWMEM), 1)
-ADD_DEPS += lwmem/lwmem.c
-DDEFS += -DHAVE_LWMEM=1
-DADEFS += -DHAVE_LWMEM=1
-else
-DDEFS += -DHAVE_LWMEM=0
-DADEFS += -DHAVE_LWMEM=0
 endif
 
 # Devices
@@ -99,6 +89,7 @@ DEVICES += flash/superand/superand.c
 CONTROLLERS += flash/superand/controller/$(SUPERAND_CONTROLLER).c
 endif
 
+# Configuration
 ifeq ($(MCU), xscale)
 DDEFS += -DCPU_XSCALE
 DADEFS += -DCPU_XSCALE
@@ -106,29 +97,24 @@ endif
 
 ifeq ($(ICACHE), 1)
 DADEFS += -DUSE_ICACHE=1
-else
-DADEFS += -DUSE_ICACHE=0
 endif
 
 ifeq ($(BP_LOADER), 1)
 DADEFS += -DUSE_BREAKPOINTS=1
 DDEFS += -DUSE_BREAKPOINTS=1
-else
-DADEFS += -DUSE_BREAKPOINTS=0
-DDEFS += -DUSE_BREAKPOINTS=0
 endif
 
 ifdef BUFFER_SIZE
 DDEFS += -DDCC_BUFFER_SIZE=${BUFFER_SIZE}
 else
-DDEFS += -DDCC_BUFFER_SIZE=0x40000
+DDEFS += -DDCC_BUFFER_SIZE=0x4000
 endif
 
-ifeq ($(NEW_IO), 1)
-DDEFS += -DUSE_OLD_DCC_IO=0
-else
-DDEFS += -DUSE_OLD_DCC_IO=1
-endif
+# ifeq ($(NEW_IO), 1)
+# DDEFS += -DUSE_OLD_DCC_IO=0
+# else
+# DDEFS += -DUSE_OLD_DCC_IO=1
+# endif
 
 ifeq ($(NO_COMPRESS), 1)
 DDEFS += -DDISABLE_COMPRESS=1
@@ -228,7 +214,6 @@ endif
 	$(info Optional libraries:)
 	$(info $(NULL)  LZO=1 = Enable LZO Compression)
 	$(info $(NULL)  LZ4=1 = Enable LZ4 Compression)
-	$(info $(NULL)  LWMEM=1 = Enable LWMEM memory management)
 	$(info Target configuration:)
 	$(info $(NULL)  PLATFORM=(name) Select chipset platform)
 	$(info $(NULL)  MCU=(MCU) = Select CPU architecture)

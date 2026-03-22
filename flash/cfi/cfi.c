@@ -51,7 +51,7 @@ DCC_RETURN CFI_Query(uint32_t offset, uint32_t type, CFIQuery *qry) {
     return DCC_OK;
 }
 
-DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset) {
+DCC_RETURN CFI_Probe(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     uint32_t CFI_Type;
     CFIQuery qry = { 0 };
     DCC_RETURN ret_code;

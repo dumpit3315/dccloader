@@ -92,7 +92,6 @@ void DN_RLE_FindMatch(uint8_t *src, uint32_t *RAW_Count, uint32_t *RLE_Count, ui
   uint32_t runCount = 1;
   uint32_t pReadSize = size < 0x7fff ? size : 0x7fff;
   uint32_t rawCount = 0;
-  
 
   while (pReadOffset < (pReadSize - 1)) {
     wdog_reset();
@@ -259,24 +258,13 @@ uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest)
 }
 #endif
 
-uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest)
-{
-  uint32_t MAGIC = CMD_WRITE_COMP_NONE;
-  uint32_t outOffset = 4;
-
-  memcpy(dest, &MAGIC, 4);
-  memcpy(dest + 4, src, size);
-  outOffset += size;
-
-  return ALIGN4(outOffset);
-}
-
 /* 03 - DCC Packets */
 #ifdef DCC_TESTING
 uint32_t DN_Packet_DCC_Send(uint32_t data) {
   printf("DCC SEND: 0x%08X\n", data);
   return 1;
 };
+
 uint32_t DN_Packet_DCC_Read() {
   uint32_t count = 0;
   uint32_t dat_read;
@@ -331,6 +319,7 @@ uint32_t DN_Packet_DCC_Read(void) {
 #define DCC_WRITE(x) asm volatile ("mcr p14, 0, %0, C1, C0" : : "r" (x))
 #define DCC_READ(x) asm volatile ("mrc p14, 0, %0, C1, C0" : "=r" (x) :)
 #endif
+
 uint32_t DN_Packet_DCC_Send(uint32_t data) {
 	volatile uint32_t dcc_reg;
 
@@ -394,6 +383,32 @@ void DN_Packet_Send_One(uint32_t data) {
 #endif
 }
 
+void DN_Packet_Send_DirectUncompressed(uint8_t *src, uint32_t size) {
+  if (size & 3) return; // Must be dword aligned
+  uint32_t MAGIC = CMD_WRITE_COMP_NONE;
+
+  uint32_t checksum = DN_Calculate_CRC32(0xffffffff, (uint8_t *)&MAGIC, 4);
+  checksum = DN_Calculate_CRC32(checksum, src, size);
+
+#if USE_BREAKPOINTS
+  DN_Packet_DCC_ResetBPP(cmdBuf);
+#endif
+
+  DN_Packet_DCC_Send((size >> 2) + 1);
+  DN_Packet_DCC_Send(CMD_WRITE_COMP_NONE);
+
+  for (uint32_t src_offset = 0; src_offset < (size >> 2); src_offset++) {
+    wdog_reset();
+    DN_Packet_DCC_Send(((uint32_t *)(src))[src_offset]);
+  }
+
+  DN_Packet_DCC_Send(checksum);
+
+#if USE_BREAKPOINTS
+  cmdReadBuf = DN_Packet_DCC_WaitForBP();
+#endif
+}
+
 void DN_Packet_Read(uint8_t *dest, uint32_t size) {
   if (size & 3) return; // Must be dword aligned
   
@@ -404,6 +419,61 @@ void DN_Packet_Read(uint8_t *dest, uint32_t size) {
 }
 
 /* 04 - DCC Buffer */
+static uint32_t dcc_temp_read;
+static uint8_t dcc_buf_offset;
+
+void DN_Packet_DCC_Read_Buffer_Reset(void) {
+  dcc_temp_read = 0;
+  dcc_buf_offset = 0;
+}
+
+static inline uint8_t DN_Packet_DCC_Read_Buffer8(void) {
+  if (!dcc_buf_offset) dcc_temp_read = DN_Packet_DCC_Read();
+  uint8_t temp = dcc_temp_read & 0xff;
+
+  dcc_temp_read >>= 8;
+  dcc_buf_offset = (dcc_buf_offset + 1) & 3;
+  return temp;
+}
+
+static inline uint16_t DN_Packet_DCC_Read_Buffer16(void) {
+  return DN_Packet_DCC_Read_Buffer8() | DN_Packet_DCC_Read_Buffer8() << 8;
+}
+
+static inline uint32_t DN_Packet_DCC_Read_Buffer32(void) {
+  return DN_Packet_DCC_Read_Buffer16() | DN_Packet_DCC_Read_Buffer16() << 16;
+}
+
+void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size) {
+  uint32_t inOffset = 0;
+  uint32_t outOffset = 0;
+
+  DN_Packet_DCC_Read_Buffer_Reset();
+
+  while (inOffset < size) {
+    uint16_t flag = DN_Packet_DCC_Read_Buffer16();
+    uint16_t count = flag & 0x7fff;
+
+    if (flag & 0x8000) {
+      inOffset += 3;
+      uint8_t data = DN_Packet_DCC_Read_Buffer8();
+
+      memset(dest + outOffset, data, count);
+      outOffset += count;
+      // do {
+      //   dest[outOffset++] = data;
+      // } while (count--);
+    } else {
+      inOffset += 2 + count;
+
+      do {
+        dest[outOffset++] = DN_Packet_DCC_Read_Buffer8();
+      } while (--count);
+    }
+  }
+}
+
+#if 0
 static uint32_t temp_buf;
 static uint8_t temp_buf_offset;
 static uint32_t checksum;
@@ -634,33 +704,7 @@ static inline uint16_t DN_Packet_DCC_Read_Buffer16(void) {
 static inline uint32_t DN_Packet_DCC_Read_Buffer32(void) {
   return DN_Packet_DCC_Read_Buffer16() | DN_Packet_DCC_Read_Buffer16() << 16;
 }
-
-void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size) {
-  uint32_t inOffset = 0;
-  uint32_t outOffset = 0;
-
-  DN_Packet_DCC_Read_Buffer_Reset();
-
-  while (inOffset < size) {
-    uint16_t flag = DN_Packet_DCC_Read_Buffer16();
-    uint16_t count = flag & 0x7fff;
-
-    if (flag & 0x8000) {
-      inOffset += 3;
-      uint8_t data = DN_Packet_DCC_Read_Buffer8();
-
-      do {
-        dest[outOffset++] = data;
-      } while (count--);
-    } else {
-      inOffset += 2 + count;
-
-      do {
-        dest[outOffset++] = DN_Packet_DCC_Read_Buffer8();
-      } while (count--);
-    }
-  }
-}
+#endif
 
 /* 05 - Utilities */
 uint32_t DN_Log2(uint32_t value)

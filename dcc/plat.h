@@ -2,6 +2,18 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <memory.h>
+#include "bitutils.h"
+
+typedef enum {
+    GPIO_INPUT,
+    GPIO_OUTPUT
+} GPIODirection;
+
+typedef enum {
+    GPIO_PULL_DISABLED,
+    GPIO_PULL_UP,
+    GPIO_PULL_DOWN
+} GPIOPullType;
 
 #ifdef DCC_TESTING
 #include <stdio.h>
@@ -18,7 +30,9 @@ extern void *PLAT_MEMCPY(void *dest, const void *src, size_t n);
 #define INT_MEMCPY memcpy
 #define PLAT_SNPRINTF snprintf
 #else
-#include "dcc/lwprintf.h"
+#include "lwprintf.h"
+
+#define SET_BIT_BM_BP(val, bit_mask, bit_pos) (val) = ((val) & ~((bit_mask) << (bit_pos))) | (((val) & (bit_mask)) << (bit_pos))
 
 #define WRITE_U8(_reg, _val)  (*((volatile uint8_t *)(_reg)) = (_val))
 #define WRITE_U16(_reg, _val)  (*((volatile uint16_t *)(_reg)) = (_val))

@@ -5,10 +5,14 @@
 #include <stdint.h>
 #include "dcc/dn_dcc_proto.h"
 
-void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset) {
+void OneNAND_Pre_Initialize(DCCMemory *mem, uint32_t offset, uint32_t page_size) {
     // Initialize routines
     mem->base_offset = offset;
-    mem->page_size = 0x800;
+    if (page_size != 0x800 && page_size != 0x1000) {
+        page_size = 0x800;
+    }
+
+    mem->page_size = page_size;
 
     OneNAND_Ctrl_Reg_Write(mem, O1N_REG_SYS_CFG1, 0x40c0, 0);
 

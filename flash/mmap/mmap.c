@@ -3,7 +3,7 @@
 #include "mmap.h"
 #include "dcc/dn_dcc_proto.h"
 
-DCC_RETURN Memdump_Probe(DCCMemory *mem, uint32_t offset) {    
+DCC_RETURN Memdump_Probe(DCCMemory *mem, uint32_t offset, uint32_t page_size) {    
     mem->manufacturer = MEMDUMP_MFR;
     mem->device_id = MEMDUMP_DEVID;
     mem->bit_width = 16;

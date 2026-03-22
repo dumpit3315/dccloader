@@ -35,7 +35,7 @@ typedef enum {
 } Configuration;
 
 typedef struct {
-    DCC_RETURN (*initialize)(DCCMemory *mem, uint32_t offset);
+    DCC_RETURN (*initialize)(DCCMemory *mem, uint32_t offset, uint32_t page_size);
     DCC_RETURN (*read)(DCCMemory *mem, uint32_t offset, uint32_t size, uint8_t *dest, uint32_t *dest_size);
     DCC_RETURN (*write)(DCCMemory *mem, uint32_t offset, uint8_t *src, uint32_t size);
     DCC_RETURN (*erase)(DCCMemory *mem, uint32_t offset, uint32_t size);
@@ -123,8 +123,10 @@ typedef struct {
 #define DCC_FLASH_NOENT    0x37 // Flash with this ID is not probed/not found
 #define DCC_WPROT_ERROR    0x3C // Read-only memory or Write/Erase routines not implemented
 #define DCC_NOMEM_ERROR    0x3D // Not enough memory
+#define DCC_E_INSUFF_DATA  0x3E // Insufficient data
 
 // Functions
+// 01 - Compress
 uint32_t DN_Packet_Compress(uint8_t *src, uint32_t size, uint8_t *dest);
 #if HAVE_MINILZO
 uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest);
@@ -132,18 +134,31 @@ uint32_t DN_Packet_Compress2(uint8_t *src, uint32_t size, uint8_t *dest);
 #if HAVE_LZ4
 uint32_t DN_Packet_Compress3(uint8_t *src, uint32_t size, uint8_t *dest);
 #endif
-uint32_t DN_Packet_CompressNone(uint8_t *src, uint32_t size, uint8_t *dest);
-uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len);
+// 02 - DCC main routines
 uint32_t DN_Packet_DCC_Send(uint32_t data);
 uint32_t DN_Packet_DCC_Read(void);
+// 03 - DCC Write routines
 void DN_Packet_Send(uint8_t *src, uint32_t size);
 void DN_Packet_Send_One(uint32_t data);
+void DN_Packet_Send_DirectUncompressed(uint8_t *src, uint32_t size);
+// 04 - DCC Read routines
 void DN_Packet_Read(uint8_t *dest, uint32_t size);
+void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size);
+uint32_t DN_Calculate_CRC32(uint32_t crc, uint8_t* data, uint32_t len);
+// 05 - Utilities
 uint32_t DN_Log2(uint32_t value);
 void DN_WaitUSec(uint32_t usec);
-void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size);
-void DN_Packet_WriteDirect(uint8_t *src, uint32_t size);
-void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size);
+// 06 - Unused
+// void DN_Packet_WriteDirectCompressed(uint8_t *src, uint32_t size);
+// void DN_Packet_WriteDirect(uint8_t *src, uint32_t size);
+// void DN_Packet_DCC_ReadCompressed(uint8_t *dest, uint32_t size);
 
 // Watchdog
 extern void wdog_reset(void);
+
+// GPIO
+extern uint8_t plat_gpio_read(uint32_t pin);
+extern void plat_gpio_write(uint32_t pin, uint8_t active);
+extern void plat_gpio_set_dir(uint32_t pin, GPIODirection dir);
+extern void plat_gpio_set_alt_func(uint32_t pin, uint32_t alt_func);
+extern void plat_gpio_set_pull(uint32_t pin, GPIOPullType pull);

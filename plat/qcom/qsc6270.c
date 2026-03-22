@@ -1,5 +1,7 @@
 #include "dcc/plat.h"
 
+#include "gpio/gpio_qsc6xxx.c"
+
 void plat_init(void) {
     // Initialize platform (after CMM, H/W init script, TCL, etc, and Uploading)
     // Can alternatively be turned off
