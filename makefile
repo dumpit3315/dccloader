@@ -169,7 +169,6 @@ ASFLAGS = $(MCFLAGS) $(CC_PIC) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
 CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
 LDFLAGS = $(MCFLAGS) $(AS_PIC) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
-
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
 
@@ -182,15 +181,16 @@ $(warning Building without platform specific routines, specify PLATFORM to chang
 endif
 
 ifndef LDSCRIPT
-LDSCRIPT = linker/linker.ld
-all: $(LDSCRIPT) $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
+LDSCRIPT = .out/linker/script.ld
+all: ldscript $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
+
+ldscript:
+	$(info Generating linker script with offset: $(LOADER_LOAD_START); size: $(LOADER_LOAD_SIZE_KB)k)
+	@mkdir -p .out/linker
+	$(PYTHON) "utils/substitute.py" linker/linker.ld.tl .out/linker/script.ld $(LOADER_LOAD_START) $(LOADER_LOAD_SIZE_KB)
 else
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin $(PROJECT).lst
 endif
-
-%.ld : %.ld.tl
-	$(info Generating linker script with offset: $(LOADER_LOAD_START); size: $(LOADER_LOAD_SIZE_KB)k)
-	$(PYTHON) "utils/substitute.py" $< $@ $(LOADER_LOAD_START) $(LOADER_LOAD_SIZE_KB)
 
 .out/%.o : %.c
 	@mkdir -p $(@D)
@@ -214,16 +214,12 @@ endif
 	$(OBJDUMP) -h -S build/$< > build/$@
 
 clean:
-	-rm -f $(OBJS)
 	-rm -f build/$(PROJECT).elf
 	-rm -f build/$(PROJECT).map
 	-rm -f build/$(PROJECT).hex
 	-rm -f build/$(PROJECT).bin
 	-rm -f build/$(PROJECT).lst
-	-rm -f $(SRC:.c=.c.bak)
-	-rm -f $(SRC:.c=.lst)
-	-rm -f $(ASRC:.s=.s.bak)
-	-rm -f $(ASRC:.s=.lst)
+	-rm -fR .out
 	-rm -fR .dep
 
 help:
