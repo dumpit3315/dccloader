@@ -164,9 +164,9 @@ CC_PIC += -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base 
 AS_PIC += -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -pie
 endif
 
-ASFLAGS = $(MCFLAGS) $(CC_PIC) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+ASFLAGS = $(MCFLAGS) $(CC_PIC) -g -gdwarf-2 -Wa,-amhls=$(@:.o=.lst) $(ADEFS) -c
 #CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(@:.o=.lst) $(DEFS) -c
 LDFLAGS = $(MCFLAGS) $(AS_PIC) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
 
 # Generate dependency information
