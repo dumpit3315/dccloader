@@ -47,20 +47,23 @@ _vectors:
 
    .global ResetHandler
    .global ExitFunction
+
 #if USE_BREAKPOINTS
    .global DN_Packet_DCC_WaitForBP
    .global DCC_PKT_RW_DATA
    .global DCC_PKT_RW_SIZE
 #endif
-#ifndef NO_PIC
+
+#ifdef PIC
    .extern pic_relocate
 #endif
+
    .extern dcc_main
    .extern __stack_und_end
 
 /* Variables */
 StartAddress:  .word 0xffffffff
-FlashSize:     .word 0x0
+NoAutoSize:    .word 0x0
 PageSize:      .word 0xffffffff
 
 /* Loader via H/W BP polling */
@@ -82,10 +85,10 @@ CrashHandler:
 
 /* DCC info */
 .ascii "DNDL"
-#ifdef NO_PIC
-.word 0
-#else
+#ifdef PIC
 .word 1
+#else
+.word 0
 #endif
 .word _vectors
 .word __bss_start
@@ -124,20 +127,20 @@ ResetHandler:
 #endif
 
    /* 01 - Initialize stack section */
-#ifndef NO_PIC
+#ifdef PIC
    mov   r0, #0
    adr   r0, _vectors
 #endif
 
    ldr   sp, =__stack_svc_end
-#ifndef NO_PIC
+#ifdef PIC
    add   sp, r0
 #endif
 
    bl plat_init
 
    /* 02 - Reset memory */
-#ifndef NO_PIC
+#ifdef PIC
    mov   r0, #0
    adr   r0, _vectors
 #endif
@@ -149,7 +152,7 @@ ResetHandler:
    ldr   r2, =__bss_end
    mov   r3, #0
    
-#ifndef NO_PIC
+#ifdef PIC
    add   r1, r0
    add   r2, r0
 #endif
@@ -159,7 +162,7 @@ bss_clear_loop:
    bne   bss_clear_loop
 
    /* 03 - Code initialize */
-#ifndef NO_PIC
+#ifdef PIC
    mov   r0, #0
    adr   r0, _vectors
 

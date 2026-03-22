@@ -110,9 +110,8 @@ ifeq ($(NO_COMPRESS), 1)
 DDEFS += -DDISABLE_COMPRESS=1
 endif
 
-ifeq ($(NO_PIC), 1)
-DADEFS += -DNO_PIC
-else
+ifeq ($(PIC), 1)
+DADEFS += -DUSE_PIC
 ADD_DEPS += dcc/pic.c
 endif
 
@@ -145,20 +144,23 @@ ADEFS   = $(DADEFS) $(UADEFS) -DADEFS="\"FLAGS=$(DADEFS) $(UADEFS) CPU=$(MCU)\""
 OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
+CC_PIC 	= 
+AS_PIC 	= 
 
 ifeq ($(BIG_ENDIAN), 1)
 MCFLAGS += -mbig-endian -mbe32
 endif
 
-ifeq ($(NO_PIC), 1)
-ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
-CPFLAGS = $(MCFLAGS) -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
-else
-ASFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
-CPFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
-LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -pie -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+ifeq ($(PIC), 1)
+CC_PIC += -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE
+AS_PIC += -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -pie
 endif
+
+ASFLAGS = $(MCFLAGS) $(CC_PIC) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+#CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+CPFLAGS = $(MCFLAGS) $(CC_PIC) -I . $(OPT) -g -gdwarf-2 -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+LDFLAGS = $(MCFLAGS) $(AS_PIC) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
@@ -222,10 +224,9 @@ endif
 	$(info $(NULL)  BUFFER_SIZE=(Buffer Size) = DCC Buffer Size (Default: 0x40000))
 	$(info $(NULL)  PROJECT=(name) = Output name)
 	$(info $(NULL)  LDSCRIPT=(ld) = Linker script)
-	$(info $(NULL)  NEW_IO=1 = Use new DCC IO routines, RLE currently doesn't work in RIFF)
 	$(info $(NULL)  NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
 	$(info $(NULL)  BIG_ENDIAN=1 = Big endian format)
-	$(info $(NULL)  NO_PIC=1 = Disable PIC support)
+	$(info $(NULL)  PIC=1 = Use PIC code)
 	$(info Flash devices:)
 	$(info $(NULL)  CFI=1 = Enable CFI interface)
 	$(info $(NULL)  NAND_CONTROLLER=(name) = Enable NAND controller)

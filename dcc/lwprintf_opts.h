@@ -40,6 +40,8 @@
  * Open "include/lwprintf/lwprintf_opt.h" and
  * copy & replace here settings you want to change values
  */
+
+#define LWPRINTF_CFG_SUPPORT_LONG_LONG 0
 #define LWPRINTF_CFG_SUPPORT_TYPE_FLOAT 0
 #define LWPRINTF_CFG_SUPPORT_TYPE_ENGINEERING 0
 
