@@ -7,8 +7,9 @@ steps:
     image: debian
     commands:
       - apt update
-      - apt install -y gcc-arm-none-eabi binutils-arm-none-eabi python3 make
+      - apt install -y gcc-arm-none-eabi binutils-arm-none-eabi python3 make zip
       - make -B PYTHON=python3 LOADER_LOAD_START=0x14000000 LOADER_LOAD_SIZE_KB=256 BUFFER_SIZE=0x10000 CFI=1 BP_LOADER=1 LOADER_DEVICES=qcom/msm6050_2x8 PLATFORM=qcom/msm6050 PROJECT=msm6050_2x32mb_nor_bp_loader
+      - zip -j msm6050_2x32mb.zip build/msm6050_2x32mb_nor_bp_loader.bin has/generic/MSM6050.has
 
   - name: upload
     image: docker.io/woodpeckerci/plugin-s3
@@ -18,7 +19,7 @@ steps:
         from_secret: s3_access_key
       secret_key:
         from_secret: s3_access_secret
-      source: build/*.bin
+      source: msm6050_2x32mb.zip
       target: /
       path_style: true
       endpoint: 
