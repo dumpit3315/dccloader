@@ -22,5 +22,6 @@ steps:
       source: msm6050_2x32mb.zip
       target: /
       path_style: true
+      overwrite: true
       endpoint: 
         from_secret: s3_server
