@@ -29,7 +29,7 @@ PHDRS
 
 MEMORY
 {
-  ram : org = 0x00000000, len = 512k
+  ram : org = 0x78000000, len = 128k
 }
 
 /*
@@ -134,5 +134,6 @@ SECTIONS
     PROVIDE (__stack_end = .);
     PROVIDE (__heap_start = .);
   } > ram
+
 }
 /*** EOF ***/

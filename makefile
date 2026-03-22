@@ -58,15 +58,11 @@ LOADER_DEVICES = default
 ifeq ($(LZO), 1)
 ADD_DEPS += minilzo/minilzo.c
 DDEFS += -DHAVE_MINILZO=1
-else
-DDEFS += -DHAVE_MINILZO=0
 endif
 
 ifeq ($(LZ4), 1)
 ADD_DEPS += lz4/lz4_fs.c
 DDEFS += -DHAVE_LZ4=1
-else
-DDEFS += -DHAVE_LZ4=0
 endif
 
 # Devices
@@ -110,19 +106,17 @@ else
 DDEFS += -DDCC_BUFFER_SIZE=0x4000
 endif
 
-# ifeq ($(NEW_IO), 1)
-# DDEFS += -DUSE_OLD_DCC_IO=0
-# else
-# DDEFS += -DUSE_OLD_DCC_IO=1
-# endif
-
 ifeq ($(NO_COMPRESS), 1)
 DDEFS += -DDISABLE_COMPRESS=1
-else
-DDEFS += -DDISABLE_COMPRESS=0
 endif
 
-SRC = main.c dcc/pic.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
+ifeq ($(NO_PIC), 1)
+DADEFS += -DNO_PIC
+else
+ADD_DEPS += dcc/pic.c
+endif
+
+SRC = main.c dcc/memory.c dcc/dn_dcc_proto.c dcc/bitutils.c dcc/lwprintf.c plat/$(PLATFORM).c devices/$(LOADER_DEVICES).c $(DEVICES) $(CONTROLLERS) $(ADD_DEPS)
 
 # List ASM source files here
 ASRC = crt.s
@@ -156,9 +150,15 @@ ifeq ($(BIG_ENDIAN), 1)
 MCFLAGS += -mbig-endian -mbe32
 endif
 
+ifeq ($(NO_PIC), 1)
+ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
+CPFLAGS = $(MCFLAGS) -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
+LDFLAGS = $(MCFLAGS) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+else
 ASFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS) -c
 CPFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -I . $(OPT) -gdwarf-2 -mthumb-interwork -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS) -c
 LDFLAGS = $(MCFLAGS) -fPIC -mpic-register=r9 -mpic-data-is-text-relative -msingle-pic-base -fPIE -pie -nostartfiles -T$(LDSCRIPT) -Wl,-Map=build/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+endif
 
 # Generate dependency information
 #CPFLAGS += -MD -MP -MF .dep/$(@F).d
@@ -225,6 +225,7 @@ endif
 	$(info $(NULL)  NEW_IO=1 = Use new DCC IO routines, RLE currently doesn't work in RIFF)
 	$(info $(NULL)  NO_COMPRESS=1 = Disable RLE compression, used if using with RIFF says failed to unpack received data.)
 	$(info $(NULL)  BIG_ENDIAN=1 = Big endian format)
+	$(info $(NULL)  NO_PIC=1 = Disable PIC support)
 	$(info Flash devices:)
 	$(info $(NULL)  CFI=1 = Enable CFI interface)
 	$(info $(NULL)  NAND_CONTROLLER=(name) = Enable NAND controller)

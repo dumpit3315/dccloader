@@ -52,7 +52,9 @@ _vectors:
    .global DCC_PKT_RW_DATA
    .global DCC_PKT_RW_SIZE
 #endif
+#ifndef NO_PIC
    .extern pic_relocate
+#endif
    .extern dcc_main
    .extern __stack_und_end
 
@@ -79,10 +81,15 @@ CrashHandler:
 .word CrashHandler
 
 /* DCC info */
+.ascii "DNDL"
+#ifdef NO_PIC
+.word 0
+#else
+.word 1
+#endif
+.word _vectors
+.word __bss_start
 .word __heap_start
-.word __heap_end
-.word __heap_size
-
 .asciz "A:DumpNow DCC Loader. (c) 2026 Wrapper.;Compile flags: " ADEFS ";Compile Date: " __DATE__
 .align
 
@@ -117,17 +124,23 @@ ResetHandler:
 #endif
 
    /* 01 - Initialize stack section */
+#ifndef NO_PIC
    mov   r0, #0
    adr   r0, _vectors
+#endif
 
    ldr   sp, =__stack_svc_end
+#ifndef NO_PIC
    add   sp, r0
+#endif
 
    bl plat_init
 
    /* 02 - Reset memory */
+#ifndef NO_PIC
    mov   r0, #0
    adr   r0, _vectors
+#endif
 
    /*
     * Clear .bss section
@@ -136,27 +149,17 @@ ResetHandler:
    ldr   r2, =__bss_end
    mov   r3, #0
    
+#ifndef NO_PIC
    add   r1, r0
    add   r2, r0
+#endif
 bss_clear_loop:
    cmp   r1, r2
    strne r3, [r1], #+4
    bne   bss_clear_loop
 
-   /*
-    * Clear .heap section
-    */
-   ldr   r1, =__heap_start
-   ldr   r2, =__heap_end
-   
-   add   r1, r0
-   add   r2, r0
-heap_clear_loop:
-   cmp   r1, r2
-   strne r3, [r1], #+4
-   bne   heap_clear_loop
-
    /* 03 - Code initialize */
+#ifndef NO_PIC
    mov   r0, #0
    adr   r0, _vectors
 
@@ -174,6 +177,7 @@ heap_clear_loop:
    /* Setup GOT */
    ldr   r9, =_sgot
    add   r9, r0
+#endif
 
    /* 04 - Jump to Main */
    mov   r0, #0
