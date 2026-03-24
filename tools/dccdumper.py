@@ -514,29 +514,144 @@ def runHAS(j: JLink, has: str):
         fp = myHAS.read(4)
         if len(fp) < 4: break
 
-        cmd = int.from_bytes(fp, "little", signed=True)
-        if cmd == -1:
-            offset, data = struct.unpack("<LL", myHAS.read(8))
-            #print(f"{cmd} (WRITE): {hex(offset)} {hex(data)}")
-            j.memory_write32(offset, data)
+        cmd = int.from_bytes(fp, "little")
+        cmd ^= 0xffffffff
 
-        elif cmd == -9:
-            offset, data = struct.unpack("<LL", myHAS.read(8))
-            #print(f"{cmd} (WRITE8): {hex(offset)} {hex(data)}")
-            j.memory_write8(offset, data)
+        match cmd:
+            case 0x00: # 0xff
+                offset, value = struct.unpack("<LL", myHAS.read(8))
+                print(f"{cmd} (WRITE): {hex(offset)} = {hex(value)}")
+                j.memory_write32(offset, [value])
 
-        elif cmd == -8:
-            offset, data = struct.unpack("<LL", myHAS.read(8))
-            #print(f"{cmd} (WRITE16): {hex(offset)} {hex(data)}")
-            j.memory_write16(offset, data)
+            case 0x01: # 0xfe
+                offset = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (READ): {hex(offset)}")
 
-        elif cmd == -12: # COPROC
-            cr_m, cr_n, cp_no, op, data = struct.unpack("<BBBBL", myHAS.read(8))            
-            #print(F"{cmd} (COPROC) {cp_no}, {cr_n}, {cr_m}, {op}, {hex(data)}")
-            if cp_no == 15: j.cp15_register_write(cr_n, op, cr_m, 0, data)
+            case 0x02: # 0xfd
+                offset, value = struct.unpack("<LL", myHAS.read(8))
+                print(f"{cmd} (WRITE AND): {hex(offset)} |= {hex(value)}")
 
-        else:
-            raise Exception(f"command {cmd} {hex(myHAS.tell() - 4)}")
+            case 0x03: # 0xfc
+                offset, mask, value = struct.unpack("<LLL", myHAS.read(12))
+                print(f"{cmd} (WRITE AND OR): {hex(offset)} |= ({hex(value)} & {hex(mask)})")
+
+            case 0x05: # 0xfa
+                unknown = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (UNKNOWN): {hex(unknown)}")
+
+            case 0x06: # 0xf9
+                offset, mask, value = struct.unpack("<LLL", myHAS.read(0xc))
+                print(f"{cmd} (WRITE OR AND): {hex(offset)} = (v({hex(offset)}) & {hex(mask)}) | {hex(value)}")
+
+            case 0x07: # 0xf8
+                offset, value = struct.unpack("<LL", myHAS.read(8))
+                print(f"{cmd} (WRITE16): {hex(offset)} = {hex(value)}")
+                j.memory_write16(offset, [value])
+
+            case 0x08: # 0xf7
+                offset, value = struct.unpack("<LL", myHAS.read(8))
+                print(f"{cmd} (WRITE8): {hex(offset)} = {hex(value)}")
+                j.memory_write8(offset, [value])
+
+            case 0x09: # 0xf6
+                offset = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (READ16): {hex(offset)}")
+
+            case 0x0a: # 0xf5
+                offset = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (READ8): {hex(offset)}")
+
+            case 0x0b: # 0xf4
+                cr_m, cr_n, cp_no, op, value = struct.unpack("<BBBBL", myHAS.read(8))            
+                print(F"{cmd} (COPROC) {cp_no}, {cr_n}, {cr_m}, {op}, {hex(value)}")
+                if cp_no == 15: 
+                    j.cp15_register_write(cr_n, op, cr_m, 0, value)
+
+            case 0x0c: # 0xf3
+                cr_m, cr_n, cp_no, op, value = struct.unpack("<BBBBL", myHAS.read(8))            
+                print(F"{cmd} (COPROC OR) {cp_no}, {cr_n}, {cr_m}, {op}, &= {hex(value)}")
+
+            case 0x0d: # 0xf2
+                cr_m, cr_n, cp_no, op, value = struct.unpack("<BBBBL", myHAS.read(8))            
+                print(F"{cmd} (COPROC AND) {cp_no}, {cr_n}, {cr_m}, {op}, |= {hex(value)}")
+
+            case 0x0f: # 0xf0
+                val = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (SLEEP): {val}")
+
+            case 0x10: # 0xef
+                offset, mask, expected, delay, branch = struct.unpack("<LLLLL", myHAS.read(0x14))
+                print(f"{cmd} (POLL_TIMEOUT): (v({hex(offset)}) & {hex(mask)}) == {hex(expected)}, max: {delay}ms, SKIP {branch} INSTRUCTION if TIMEOUT")
+
+            case 0x11: # 0xee
+                offset, mask, expected, delay, branch = struct.unpack("<LLLLL", myHAS.read(0x14))
+                print(f"{cmd} (POLL): (v({hex(offset)}) & {hex(mask)}) == {expected}, max: {delay}ms, SKIP {branch} INSTRUCTION if TRUE")
+
+            case 0x12: # 0xed
+                code = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd} (SKIP) {code} instructions")
+
+            case 0x18: # 0xe7
+                offset, mask = struct.unpack("<LL", myHAS.read(0x8))
+                print(f"{cmd} (UNKNOWN) {hex(offset)} {hex(mask)}")
+
+            case 0x25: # 0xda
+                mask, cond, branch = struct.unpack("<LLL", myHAS.read(0xc))
+                print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if TRUE")
+
+            case 0x26: # 0xd9
+                mask, cond, branch = struct.unpack("<LLL", myHAS.read(0xc))
+                print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if FALSE")
+
+            case 0x27: # 0xd8
+                offset = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd}: (READ AND PRINT) {hex(offset)}")
+
+            case 0x28: # 0xd7
+                val = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd}: (PRINT) {hex(val)}")
+
+            case 0x29: # 0xd6
+                offset, value = struct.unpack("<LL", myHAS.read(8))
+                print(f"{cmd} (WRITE OR): {hex(offset)} &= {hex(value)}")
+
+            case 0x2a: # 0xd5
+                offset, mask, value = struct.unpack("<LLL", myHAS.read(0xc))
+                print(f"{cmd} (WRITE OR AND): {hex(offset)} &= ({hex(value)} & {hex(mask)})")
+
+            case 0xf9: # 0x06
+                val = int.from_bytes(myHAS.read(4), "little")
+                print(f"{cmd}: (SET) {val}")
+
+            case 0xfe: # 0x01
+                print(f"{cmd} (RETURN)")
+
+            case _:
+                raise Exception(f"command {cmd} {hex(myHAS.tell() - 4)}")
+
+        # cmd = int.from_bytes(fp, "little", signed=True)
+        # if cmd == -1:
+        #     offset, data = struct.unpack("<LL", myHAS.read(8))
+        #     #print(f"{cmd} (WRITE): {hex(offset)} {hex(data)}")
+        #     j.memory_write32(offset, data)
+
+        # elif cmd == -9:
+        #     offset, data = struct.unpack("<LL", myHAS.read(8))
+        #     #print(f"{cmd} (WRITE8): {hex(offset)} {hex(data)}")
+        #     j.memory_write8(offset, data)
+
+        # elif cmd == -8:
+        #     offset, data = struct.unpack("<LL", myHAS.read(8))
+        #     #print(f"{cmd} (WRITE16): {hex(offset)} {hex(data)}")
+        #     j.memory_write16(offset, data)
+
+        # elif cmd == -12: # COPROC
+        #     cr_m, cr_n, cp_no, op, data = struct.unpack("<BBBBL", myHAS.read(8))            
+        #     #print(F"{cmd} (COPROC) {cp_no}, {cr_n}, {cr_m}, {op}, {hex(data)}")
+        #     if cp_no == 15: j.cp15_register_write(cr_n, op, cr_m, 0, data)
+
+        # else:
+        #     raise Exception(f"command {cmd} {hex(myHAS.tell() - 4)}")
 
 class Args(Tap):
     loader: str # DCC loader to load

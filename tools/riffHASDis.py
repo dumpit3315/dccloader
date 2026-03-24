@@ -11,7 +11,6 @@ if __name__ == "__main__":
         cmd = int.from_bytes(fp, "little")
         cmd ^= 0xffffffff
 
-        
         match cmd:
             case 0x00: # 0xff
                 offset, value = struct.unpack("<LL", f.read(8))
