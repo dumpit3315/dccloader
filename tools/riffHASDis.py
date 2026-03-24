@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
             case 0x03: # 0xfc
                 offset, mask, value = struct.unpack("<LLL", f.read(12))
-                print(f"{cmd} (WRITE OR): {hex(offset)} |= ({hex(value)} & {hex(mask)})")
+                print(f"{cmd} (WRITE AND OR): {hex(offset)} |= ({hex(value)} & {hex(mask)})")
 
             case 0x05: # 0xfa
                 unknown = int.from_bytes(f.read(4), "little")
@@ -85,13 +85,36 @@ if __name__ == "__main__":
                 offset, mask = struct.unpack("<LL", f.read(0x8))
                 print(f"{cmd} (UNKNOWN) {hex(offset)} {hex(mask)}")
 
+            case 0x25: # 0xda
+                mask, cond, branch = struct.unpack("<LLL", f.read(0xc))
+                print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if TRUE")
+
+            case 0x26: # 0xd9
+                mask, cond, branch = struct.unpack("<LLL", f.read(0xc))
+                print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if FALSE")
+
+            case 0x27: # 0xd7
+                offset = int.from_bytes(f.read(4), "little")
+                print(f"{cmd}: (READ AND PRINT) {hex(offset)}")
+
+            case 0x28: # 0xd7
+                val = int.from_bytes(f.read(4), "little")
+                print(f"{cmd}: (PRINT) {hex(val)}")
+
             case 0x29: # 0xd6
                 offset, value = struct.unpack("<LL", f.read(8))
-                print(f"{cmd} (WRITE UNKNOWN): {hex(offset)} = {hex(value)}")
+                print(f"{cmd} (WRITE OR): {hex(offset)} &= {hex(value)}")
 
             case 0x2a: # 0xd5
                 offset, mask, value = struct.unpack("<LLL", f.read(0xc))
                 print(f"{cmd} (UNKNOWN OR AND): {hex(offset)}) ; ({hex(value)} & {hex(mask)})")
+
+            case 0xf9: # 0x06
+                val = int.from_bytes(f.read(4), "little")
+                print(f"{cmd}: (SET) {val}")
+
+            case 0xfe: # 0x01
+                print(f"{cmd} (RETURN)")
 
             case _:
                 raise Exception(f"command {cmd} {hex(f.tell() - 4)}")
