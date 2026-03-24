@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
             case 0x2a: # 0xd5
                 offset, mask, value = struct.unpack("<LLL", f.read(0xc))
-                print(f"{cmd} (UNKNOWN OR AND): {hex(offset)} ; ({hex(value)} & {hex(mask)})")
+                print(f"{cmd} (WRITE OR AND): {hex(offset)} &= ({hex(value)} & {hex(mask)})")
 
             case 0xf9: # 0x06
                 val = int.from_bytes(f.read(4), "little")
