@@ -93,7 +93,7 @@ if __name__ == "__main__":
                 mask, cond, branch = struct.unpack("<LLL", f.read(0xc))
                 print(f"{cmd} (COND): (a & {hex(mask)}) == {hex(cond)}, SKIP {branch} INSTRUCTION if FALSE")
 
-            case 0x27: # 0xd7
+            case 0x27: # 0xd8
                 offset = int.from_bytes(f.read(4), "little")
                 print(f"{cmd}: (READ AND PRINT) {hex(offset)}")
 
