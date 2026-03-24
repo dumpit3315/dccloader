@@ -19,3 +19,5 @@ test_emu/
 dcc_test.py
 old_stuff/
 .out/
+*.tar
+*.zip
